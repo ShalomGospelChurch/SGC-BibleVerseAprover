@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import type { Verse, LogEntry, Utente } from '@/lib/supabase'
 
-// ─── VERSE CARD ───────────────────────────────────────────
+// ─── VERSE CARD MODERNA ───────────────────────────────────────────
 function VerseCard({
   verse, user, onApprove, onRefuse, loadingId
 }: {
@@ -19,83 +19,76 @@ function VerseCard({
   const isDone = verse.stato === 'approved' || verse.stato === 'refused'
 
   return (
-    <div className={`rounded-2xl p-5 border transition-all ${
-      verse.stato === 'approved' ? 'border-green-500/20 bg-green-500/3' :
-      verse.stato === 'refused'  ? 'border-red-500/20 bg-red-500/3' :
-      'border-white/6 hover:border-indigo-500/30'
-    }`} style={{background: verse.stato === 'pending' ? 'rgba(255,255,255,0.02)' : undefined}}>
-
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-2.5">
-          <span className="text-xs font-mono text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-lg">
-            #{verse.numero}
-          </span>
-          <div>
-            <p className="text-sm font-semibold text-white">{verse.riferimento_ita}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{verse.riferimento_sin}</p>
+    <div className={`group rounded-2xl p-6 border transition-all duration-300 ${
+      verse.stato === 'approved' ? 'border-green-500/30 bg-green-500/5' :
+      verse.stato === 'refused'  ? 'border-red-500/30 bg-red-500/5' :
+      'border-white/5 bg-white/2 hover:bg-white/4 hover:border-white/10'
+    }`}>
+      
+      {/* Header: Info & Status */}
+      <div className="flex items-start justify-between mb-5">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="flex items-center justify-center text-[10px] font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 w-7 h-7 rounded-lg">
+              {verse.numero}
+            </span>
+            <h3 className="text-base font-bold text-white tracking-tight">{verse.riferimento_ita}</h3>
           </div>
-        </div>
-        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
-          verse.stato === 'pending'      ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
-          verse.stato === 'approved'     ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-          verse.stato === 'refused'      ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-          'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-        }`}>
-          {verse.stato === 'pending'  ? '⏳ In attesa' :
-           verse.stato === 'approved' ? '✓ Approvato'  :
-           verse.stato === 'refused'  ? '✕ Rifiutato'  : '↻ Rigenerato'}
-        </span>
-      </div>
-
-      {/* Testi */}
-      <div className="space-y-3 mb-4">
-        <div className="rounded-xl p-3.5 border border-white/5" style={{background: 'var(--bg-card)'}}>
-          <p className="text-xs text-indigo-400 font-medium mb-1.5 uppercase tracking-wider">Italiano — NR</p>
-          <p className="text-sm text-gray-200 leading-relaxed">{verse.testo_ita}</p>
-        </div>
-        <div className="rounded-xl p-3.5 border border-white/5" style={{background: 'var(--bg-card)'}}>
-          <p className="text-xs text-purple-400 font-medium mb-1.5 uppercase tracking-wider">සිංහල — Old Version</p>
-          <p className="text-sm text-gray-300 leading-relaxed">{verse.testo_sin}</p>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">
-          <span className="text-gray-600">Tema: </span>
-          <span className="text-gray-400">{verse.tema}</span>
-        </span>
-
-        {isLoading ? (
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl" style={{background: 'var(--bg-secondary)'}}>
-            <span className="w-3.5 h-3.5 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full inline-block"
-                  style={{animation: 'spin 0.8s linear infinite'}}/>
-            <span className="text-xs text-gray-400">
-              {verse.stato === 'refused' ? 'Rigenerando...' : 'Salvando...'}
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-gray-500 font-medium">{verse.riferimento_sin}</p>
+            <span className="w-1 h-1 rounded-full bg-gray-800" />
+            <span className="text-[10px] uppercase tracking-widest text-indigo-400/80 font-bold">
+              {verse.tema}
             </span>
           </div>
+        </div>
+        
+        <div className={`text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full border ${
+          verse.stato === 'pending'      ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
+          verse.stato === 'approved'     ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+          'bg-red-500/10 text-red-500 border-red-500/20'
+        }`}>
+          {verse.stato === 'pending' ? 'Pending' : verse.stato}
+        </div>
+      </div>
+
+      {/* Texts */}
+      <div className="grid gap-4 mb-6">
+        <div className="relative group/text">
+          <p className="text-[10px] text-indigo-400/60 font-bold uppercase mb-1.5 px-1 tracking-tight">Italiano (NR)</p>
+          <p className="text-[15px] text-gray-200 leading-relaxed font-medium bg-white/3 p-4 rounded-xl border border-white/5">
+            {verse.testo_ita}
+          </p>
+        </div>
+        
+        <div className="relative group/text">
+          <p className="text-[10px] text-purple-400/60 font-bold uppercase mb-1.5 px-1 tracking-tight">Sinhala (OV)</p>
+          <p className="text-[17px] text-gray-300 leading-relaxed font-medium bg-white/3 p-4 rounded-xl border border-white/5" style={{lineHeight: '1.6'}}>
+            {verse.testo_sin}
+          </p>
+        </div>
+      </div>
+
+      {/* Footer: Actions */}
+      <div className="flex items-center justify-end pt-4 border-t border-white/5">
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-gray-500">
+            <span className="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+            <span className="text-xs font-medium italic">Processing...</span>
+          </div>
         ) : isDone ? (
-          <span className="text-xs text-gray-500 italic">
-            {verse.stato === 'approved' ? `✓ ${verse.approvato_da || user.nome}` : '✕ Rifiutato'}
-          </span>
+          <p className="text-xs text-gray-500 font-medium italic">
+            {verse.stato === 'approved' ? `✓ Approved by ${verse.approvato_da || user.nome}` : '✕ Refused'}
+          </p>
         ) : (
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button onClick={() => onRefuse(verse)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium text-red-200 transition-all hover:scale-105"
-              style={{background: 'linear-gradient(135deg, #7f1d1d, #991b1b)', border: '1px solid rgba(239,68,68,0.25)'}}>
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              Rifiuta
+              className="px-5 py-2.5 rounded-xl text-xs font-bold text-red-400 hover:bg-red-500/10 transition-all border border-red-500/10">
+              Refuse
             </button>
             <button onClick={() => onApprove(verse)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium text-green-200 transition-all hover:scale-105"
-              style={{background: 'linear-gradient(135deg, #166534, #15803d)', border: '1px solid rgba(34,197,94,0.25)'}}>
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <path d="M2 7L5.5 10.5L12 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Approva
+              className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/10 active:scale-95 border border-indigo-400/20">
+              Approve Verse
             </button>
           </div>
         )}
@@ -107,52 +100,39 @@ function VerseCard({
 // ─── LOG TABLE ────────────────────────────────────────────
 function LogTable({ logs }: { logs: LogEntry[] }) {
   return (
-    <div className="rounded-2xl overflow-hidden border border-white/6" style={{background: 'var(--bg-card)'}}>
-      <div className="px-5 py-4 border-b border-white/5">
-        <h3 className="text-sm font-semibold text-white">Log Azioni</h3>
+    <div className="rounded-2xl overflow-hidden border border-white/5 bg-white/2">
+      <div className="px-5 py-4 border-b border-white/5 bg-white/1">
+        <h3 className="text-sm font-bold text-white">Log Azioni</h3>
         <p className="text-xs text-gray-500 mt-0.5">{logs.length} azioni registrate</p>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full text-left">
           <thead>
             <tr className="border-b border-white/5">
-              {['Timestamp','Riferimento','Azione','Utente','Ruolo'].map(h => (
-                <th key={h} className="text-left text-xs text-gray-500 uppercase tracking-wider px-5 py-3 font-medium">{h}</th>
+              {['Timestamp','Riferimento','Azione','Utente'].map(h => (
+                <th key={h} className="text-[10px] text-gray-500 uppercase tracking-widest px-5 py-3 font-bold">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {logs.map((log) => (
-              <tr key={log.id} className="border-b border-white/3 hover:bg-white/2 transition-colors">
+              <tr key={log.id} className="border-b border-white/2 hover:bg-white/2 transition-colors">
                 <td className="px-5 py-3.5 text-xs font-mono text-gray-500">
                   {new Date(log.created_at).toLocaleString('it-IT')}
                 </td>
-                <td className="px-5 py-3.5 text-sm text-gray-300 font-medium">{log.riferimento}</td>
+                <td className="px-5 py-3.5 text-sm text-gray-300 font-semibold">{log.riferimento}</td>
                 <td className="px-5 py-3.5">
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
                     log.azione === 'approved'    ? 'bg-green-500/10 text-green-400 border-green-500/20' :
                     log.azione === 'refused'     ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                    log.azione === 'regenerated' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
-                    'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                    'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
                   }`}>
-                    {log.azione === 'approved'    ? '✓ Approvato'  :
-                     log.azione === 'refused'     ? '✕ Rifiutato'  :
-                     log.azione === 'regenerated' ? '↻ Rigenerato' : log.azione}
+                    {log.azione.toUpperCase()}
                   </span>
                 </td>
-                <td className="px-5 py-3.5 text-sm text-gray-300">{log.utente}</td>
-                <td className="px-5 py-3.5">
-                  <span className="text-xs text-gray-500 bg-white/5 px-2 py-0.5 rounded-md">{log.ruolo}</span>
-                </td>
+                <td className="px-5 py-3.5 text-xs text-gray-400 font-medium">{log.utente}</td>
               </tr>
             ))}
-            {logs.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-5 py-8 text-center text-sm text-gray-600">
-                  Nessuna azione registrata
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
@@ -160,188 +140,73 @@ function LogTable({ logs }: { logs: LogEntry[] }) {
   )
 }
 
-type Utente2 = {
-  id: number
-  nome: string
-  username: string
-  ruolo: string
-  stato: string
-  avatar: string
-  created_at: string
-}
+// ─── USERS TAB (ADMIN ONLY) ──────────────────────────────
+type Utente2 = { id: number; nome: string; username: string; ruolo: string; stato: string; avatar: string; created_at: string }
 
-function UsersTab({ currentUser }: { currentUser: Utente }) {
+function UsersTab({ }: { currentUser: Utente }) {
   const [users, setUsers] = useState<Utente2[]>([])
   const [loading, setLoading] = useState(true)
-  const [loadingId, setLoadingId] = useState<number | null>(null)
+  const [, setLoadingId] = useState<number | null>(null)
 
   useEffect(() => {
-    fetch('/api/utenti')
-      .then(r => r.json())
-      .then(setUsers)
-      .finally(() => setLoading(false))
+    fetch('/api/utenti').then(r => r.json()).then(setUsers).finally(() => setLoading(false))
   }, [])
 
   const handleApprove = async (user: Utente2) => {
     setLoadingId(user.id)
-    await fetch('/api/utenti/approve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: user.id, ruolo: user.ruolo }),
-    })
-    setUsers(us => us.map(u => u.id === user.id ? { ...u, stato: 'approved', attivo: true } : u))
+    await fetch('/api/utenti/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: user.id, ruolo: user.ruolo }) })
+    setUsers(us => us.map(u => u.id === user.id ? { ...u, stato: 'approved' } : u))
     setLoadingId(null)
   }
 
-  const handleRefuse = async (user: Utente2) => {
-    setLoadingId(user.id)
-    await fetch('/api/utenti/refuse', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: user.id }),
-    })
-    setUsers(us => us.map(u => u.id === user.id ? { ...u, stato: 'refused' } : u))
-    setLoadingId(null)
-  }
-
-  if (loading) return (
-    <div className="flex items-center justify-center py-20">
-      <span className="w-6 h-6 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full inline-block"
-            style={{animation: 'spin 0.8s linear infinite'}}/>
-    </div>
-  )
-
-  const pending = users.filter(u => u.stato === 'pending')
-  const others = users.filter(u => u.stato !== 'pending')
+  if (loading) return <div className="flex justify-center py-20"><span className="w-5 h-5 border-2 border-white/10 border-t-white rounded-full animate-spin"/></div>
 
   return (
     <div className="space-y-6">
-      {/* Pending */}
-      {pending.length > 0 && (
-        <div>
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"
-              style={{color: 'var(--text-primary)'}}>
-            <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block"/>
-            In attesa di approvazione ({pending.length})
-          </h3>
-          <div className="space-y-2">
-            {pending.map(user => (
-              <div key={user.id}
-                   className="rounded-2xl p-4 border flex items-center justify-between gap-4"
-                   style={{background: 'var(--bg-card)', borderColor: 'rgba(234,179,8,0.2)'}}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                       style={{background: 'linear-gradient(135deg, #6366f1, #8b5cf6)'}}>
-                    {user.avatar}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold" style={{color: 'var(--text-primary)'}}>{user.nome}</p>
-                    <p className="text-xs" style={{color: 'var(--text-secondary)'}}>@{user.username}</p>
-                  </div>
-                  <select
-                    defaultValue={user.ruolo}
-                    onChange={e => setUsers(us => us.map(u => u.id === user.id ? {...u, ruolo: e.target.value} : u))}
-                    className="text-xs rounded-lg px-2 py-1 border outline-none ml-2"
-                    style={{background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)'}}>
-                    <option value="Pastor">Pastor</option>
-                    <option value="Admin">Admin</option>
-                  </select>
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  {loadingId === user.id ? (
-                    <span className="w-5 h-5 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full inline-block"
-                          style={{animation: 'spin 0.8s linear infinite'}}/>
-                  ) : (
-                    <>
-                      <button onClick={() => handleRefuse(user)}
-                        className="px-3 py-1.5 rounded-xl text-xs font-medium text-red-200 transition-all hover:scale-105"
-                        style={{background: 'linear-gradient(135deg, #7f1d1d, #991b1b)', border: '1px solid rgba(239,68,68,0.25)'}}>
-                        ✕ Rifiuta
-                      </button>
-                      <button onClick={() => handleApprove(user)}
-                        className="px-3 py-1.5 rounded-xl text-xs font-medium text-green-200 transition-all hover:scale-105"
-                        style={{background: 'linear-gradient(135deg, #166534, #15803d)', border: '1px solid rgba(34,197,94,0.25)'}}>
-                        ✓ Approva
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* All users */}
-      <div>
-        <h3 className="text-sm font-semibold mb-3" style={{color: 'var(--text-primary)'}}>
-          Tutti gli utenti ({others.length})
-        </h3>
-        <div className="rounded-2xl overflow-hidden border"
-             style={{background: 'var(--bg-card)', borderColor: 'var(--border-color)'}}>
-          <table className="w-full">
-            <thead>
-              <tr className="border-b" style={{borderColor: 'var(--border-color)'}}>
-                {['Utente', 'Username', 'Ruolo', 'Stato', 'Data'].map(h => (
-                  <th key={h} className="text-left text-xs uppercase tracking-wider px-5 py-3 font-medium"
-                      style={{color: 'var(--text-secondary)'}}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {others.map(user => (
-                <tr key={user.id} className="border-b transition-colors"
-                    style={{borderColor: 'var(--border-color)'}}>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                           style={{background: 'linear-gradient(135deg, #6366f1, #8b5cf6)'}}>
-                        {user.avatar}
-                      </div>
-                      <span className="text-sm" style={{color: 'var(--text-primary)'}}>{user.nome}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 text-sm" style={{color: 'var(--text-secondary)'}}>@{user.username}</td>
-                  <td className="px-5 py-3.5">
-                    <span className="text-xs px-2 py-0.5 rounded-md"
-                          style={{background: 'var(--bg-secondary)', color: 'var(--text-secondary)'}}>
-                      {user.ruolo}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
-                      user.stato === 'approved' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                      user.stato === 'refused'  ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                      'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                    }`}>
-                      {user.stato === 'approved' ? '✓ Attivo' :
-                       user.stato === 'refused'  ? '✕ Rifiutato' : '⏳ In attesa'}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-xs font-mono" style={{color: 'var(--text-muted)'}}>
-                    {new Date(user.created_at).toLocaleDateString('it-IT')}
-                  </td>
-                </tr>
+      <div className="rounded-2xl overflow-hidden border border-white/5 bg-white/2">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="border-b border-white/5 bg-white/1">
+              {['Utente', 'Ruolo', 'Stato', 'Data'].map(h => (
+                <th key={h} className="text-[10px] text-gray-500 uppercase tracking-widest px-5 py-3 font-bold">{h}</th>
               ))}
-              {others.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-sm"
-                      style={{color: 'var(--text-muted)'}}>
-                    Nessun utente
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(user => (
+              <tr key={user.id} className="border-b border-white/2">
+                <td className="px-5 py-3.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-indigo-600">
+                      {user.avatar}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white">{user.nome}</p>
+                      <p className="text-[10px] text-gray-500">@{user.username}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-5 py-3.5 text-xs text-gray-300 font-medium">{user.ruolo}</td>
+                <td className="px-5 py-3.5">
+                    {user.stato === 'pending' ? (
+                        <div className="flex gap-2">
+                             <button onClick={() => handleApprove(user)} className="text-[10px] font-bold px-3 py-1 bg-white text-black rounded-lg hover:bg-gray-200 transition-all">Approva</button>
+                        </div>
+                    ) : (
+                        <span className="text-[10px] font-bold text-green-400 uppercase tracking-tight">Attivo</span>
+                    )}
+                </td>
+                <td className="px-5 py-3.5 text-xs font-mono text-gray-600">{new Date(user.created_at).toLocaleDateString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
 }
 
-// ─── DASHBOARD ────────────────────────────────────────────
+// ─── DASHBOARD MAIN ──────────────────────────────────────
 export default function DashboardClient({
   user, initialVerses, initialLogs
 }: {
@@ -353,205 +218,112 @@ export default function DashboardClient({
   const [verses, setVerses] = useState<Verse[]>(initialVerses)
   const [logs, setLogs] = useState<LogEntry[]>(initialLogs)
   const [loadingId, setLoadingId] = useState<number | null>(null)
-  const [] = useTransition()
   const router = useRouter()
 
-  const today = new Date().toLocaleDateString('it-IT', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-  })
-
   const pendingCount = verses.filter(v => v.stato === 'pending').length
-  const approvedCount = verses.filter(v => v.stato === 'approved').length
 
-    const handleApprove = async (verse: Verse) => {
-        setLoadingId(verse.id)
-        const toastId = toast.loading(`Approvando "${verse.riferimento_ita}"...`)
-        try {
-            await fetch('/api/versetti/approve', {
+  const handleApprove = async (verse: Verse) => {
+    setLoadingId(verse.id)
+    const toastId = toast.loading('Salvando...')
+    try {
+        await fetch('/api/versetti/approve', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                versetto_id: verse.id,
-                riferimento_ita: verse.riferimento_ita,
-                utente: user.nome,
-                ruolo: user.ruolo,
-                row_number: verse.row_number,
-            }),
-            })
-            setVerses(vs => vs.map(v => v.id === verse.id
-            ? { ...v, stato: 'approved', approvato_da: user.nome } : v))
-            setLogs(ls => [{
-            id: Date.now(), versetto_id: verse.id,
-            riferimento: verse.riferimento_ita, azione: 'approved',
-            utente: user.nome, ruolo: user.ruolo,
-            created_at: new Date().toISOString()
-            }, ...ls])
-            toast.success(`✓ "${verse.riferimento_ita}" approvato!`, { id: toastId })
-        } catch {
-            toast.error('Errore durante l\'approvazione', { id: toastId })
-        }
-        setLoadingId(null)
-    }
+            body: JSON.stringify({ versetto_id: verse.id, riferimento_ita: verse.riferimento_ita, utente: user.nome, ruolo: user.ruolo, row_number: verse.row_number }),
+        })
+        setVerses(vs => vs.map(v => v.id === verse.id ? { ...v, stato: 'approved', approvato_da: user.nome } : v))
+        setLogs(ls => [{ id: Date.now(), versetto_id: verse.id, riferimento: verse.riferimento_ita, azione: 'approved', utente: user.nome, ruolo: user.ruolo, created_at: new Date().toISOString() }, ...ls])
+        toast.success('Approvato!', { id: toastId })
+    } catch { toast.error('Errore!', { id: toastId }) }
+    setLoadingId(null)
+  }
 
-    const handleRefuse = async (verse: Verse) => {
-        setLoadingId(verse.id)
-        const toastId = toast.loading(`Rifiutando e rigenerando...`)
-        try {
-            await fetch('/api/versetti/refuse', {
+  const handleRefuse = async (verse: Verse) => {
+    setLoadingId(verse.id)
+    const toastId = toast.loading('Rigenerando...')
+    try {
+        await fetch('/api/versetti/refuse', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                versetto_id: verse.id,
-                riferimento_ita: verse.riferimento_ita,
-                utente: user.nome,
-                ruolo: user.ruolo,
-                row_number: verse.row_number,
-            }),
-            })
-            setVerses(vs => vs.map(v => v.id === verse.id ? { ...v, stato: 'refused' } : v))
-            setLogs(ls => [
-            { id: Date.now(), versetto_id: verse.id, riferimento: verse.riferimento_ita, azione: 'refused', utente: user.nome, ruolo: user.ruolo, created_at: new Date().toISOString() },
-            { id: Date.now()+1, versetto_id: verse.id, riferimento: verse.riferimento_ita, azione: 'regenerated', utente: 'Gemini AI', ruolo: 'Sistema', created_at: new Date().toISOString() },
-            ...ls
-            ])
-            toast.success('↻ Gemini sta generando un versetto sostitutivo', { id: toastId })
-        } catch {
-            toast.error('Errore durante il rifiuto', { id: toastId })
-        }
-        setLoadingId(null)
-    }
+            body: JSON.stringify({ versetto_id: verse.id, riferimento_ita: verse.riferimento_ita, utente: user.nome, ruolo: user.ruolo, row_number: verse.row_number }),
+        })
+        setVerses(vs => vs.map(v => v.id === verse.id ? { ...v, stato: 'refused' } : v))
+        toast.success('Inviato a Gemini per rigenerazione', { id: toastId })
+    } catch { toast.error('Errore!', { id: toastId }) }
+    setLoadingId(null)
+  }
 
-    const handleLogout = async () => {
-        await fetch('/api/auth/logout', { method: 'POST' })
-        router.push('/login')
-        router.refresh()
-    }
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    router.push('/login')
+  }
 
   return (
     <div className="min-h-screen" style={{background: 'var(--bg-primary)'}}>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: { background: '#1a1a2e', color: '#e8e6e0', border: '1px solid rgba(255,255,255,0.08)' },
-          duration: 4000,
-        }}
-      />
+      <Toaster position="top-right" toastOptions={{ style: { background: '#121212', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
 
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-white/6"
-              style={{background: 'var(--bg-primary)', backdropFilter: 'blur(12px)'}}>
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm text-white"
-                 style={{background: 'linear-gradient(135deg, #6366f1, #8b5cf6)'}}>✝</div>
+      <header className="sticky top-0 z-40 border-b border-white/5 bg-[#0a0a0c]/80 backdrop-blur-xl">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-lg bg-indigo-600 shadow-lg shadow-indigo-600/20 italic">✝</div>
             <div>
-              <h1 className="text-sm font-semibold text-white leading-none">SGC BibleVerse</h1>
-              <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">{today}</p>
+              <h1 className="text-sm font-bold text-white tracking-tight">SGC BibleVerse</h1>
+              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-0.5">Control Center</p>
             </div>
           </div>
-
-          <div className="hidden md:flex items-center gap-4">
-            <div className="text-center">
-              <p className="text-lg font-semibold text-white leading-none">{pendingCount}</p>
-              <p className="text-xs text-yellow-500 mt-0.5">In attesa</p>
-            </div>
-            <div className="w-px h-8 bg-white/10"/>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-white leading-none">{approvedCount}</p>
-              <p className="text-xs text-green-500 mt-0.5">Approvati</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="hidden sm:block text-right">
-              <p className="text-xs font-medium text-white">{user.nome}</p>
-              <p className="text-xs text-indigo-400">{user.ruolo}</p>
+              <p className="text-xs font-bold text-white">{user.nome}</p>
+              <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-tighter">{user.ruolo}</p>
             </div>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                 style={{background: 'linear-gradient(135deg, #6366f1, #8b5cf6)'}}>
-              {user.avatar}
-            </div>
-            <button onClick={handleLogout}
-              className="text-xs text-gray-500 hover:text-gray-300 transition-colors px-2 py-1 rounded-lg hover:bg-white/5">
-              Esci
-            </button>
+            <button onClick={handleLogout} className="text-[10px] font-bold text-gray-500 hover:text-white uppercase transition-colors">Esci</button>
           </div>
         </div>
       </header>
 
       {/* Tabs */}
-      <div className="border-b border-white/6 sticky top-14.25 z-30"
-           style={{background: 'var(--bg-primary)'}}>
-        <div className="max-w-5xl mx-auto px-4 flex">
-            {[
-                { id: 'versetti', label: 'Versetti', icon: '📖', badge: pendingCount > 0 ? pendingCount : null },
-                { id: 'log',      label: 'Log',      icon: '📋', badge: null },
-                ...(user.ruolo === 'Admin' ? [{ id: 'utenti', label: 'Utenti', icon: '👥', badge: null }] : []),
-            ].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id as 'versetti' | 'log' | 'utenti')}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2 ${
-                tab === t.id
-                  ? 'text-white border-indigo-500'
-                  : 'text-gray-500 border-transparent hover:text-gray-300'
-              }`}>
-              <span>{t.icon}</span>
-              <span>{t.label}</span>
-              {t.badge && (
-                <span className="text-xs px-1.5 py-0.5 rounded-full border bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                  {t.badge}
-                </span>
-              )}
-            </button>
-          ))}
+      <div className="border-b border-white/5 bg-[#0a0a0c]/40">
+        <div className="max-w-4xl mx-auto px-6 flex gap-8">
+            {['versetti', 'log', 'utenti'].map((t) => (
+                (t !== 'utenti' || user.ruolo === 'Admin') && (
+                    <button key={t} onClick={() => setTab(t as never)}
+                        className={`py-4 text-[11px] font-bold uppercase tracking-[0.2em] transition-all border-b-2 ${
+                        tab === t ? 'text-white border-white' : 'text-gray-600 border-transparent hover:text-gray-400'
+                        }`}>
+                        {t} {t === 'versetti' && pendingCount > 0 && <span className="ml-1 text-indigo-400">({pendingCount})</span>}
+                    </button>
+                )
+            ))}
         </div>
       </div>
 
-      {/* Content */}
-      <main className="max-w-5xl mx-auto px-4 py-6">
+      {/* Main Content */}
+      <main className="max-w-3xl mx-auto px-6 py-10">
         {tab === 'versetti' && (
-          <div>
-            <div className="flex items-center justify-between mb-5">
+          <div className="space-y-10">
+            <div className="flex items-end justify-between px-2">
               <div>
-                <h2 className="text-base font-semibold text-white">Versetti di oggi</h2>
-                <p className="text-xs text-gray-500 mt-0.5">{verses.length} versetti proposti da Gemini</p>
+                <h2 className="text-2xl font-bold text-white tracking-tight">Daily Verses</h2>
+                <p className="text-sm text-gray-500 font-medium">Revisiona i contenuti generati da Gemini per oggi.</p>
               </div>
-              {pendingCount === 0 && verses.length > 0 && (
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full border bg-green-500/10 text-green-400 border-green-500/20">
-                  ✓ Tutti revisionati
-                </span>
-              )}
-              {verses.length === 0 && (
-                <span className="text-xs text-gray-500">Nessun versetto per oggi — il workflow gira alle 02:22</span>
-              )}
+              <div className="text-right">
+                <span className="text-3xl font-black text-white/10 block leading-none">{verses.length}</span>
+                <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Totali</span>
+              </div>
             </div>
 
-            <div className="grid gap-3 lg:grid-cols-2">
+            <div className="flex flex-col gap-6">
               {verses.map(v => (
-                <VerseCard
-                  key={v.id} verse={v} user={user}
-                  onApprove={handleApprove} onRefuse={handleRefuse}
-                  loadingId={loadingId}
-                />
+                <VerseCard key={v.id} verse={v} user={user} onApprove={handleApprove} onRefuse={handleRefuse} loadingId={loadingId} />
               ))}
             </div>
           </div>
         )}
 
         {tab === 'log' && <LogTable logs={logs} />}
-            {tab === 'utenti' && user.ruolo === 'Admin' && (
-            <div>
-                <div className="mb-5">
-                <h2 className="text-base font-semibold" style={{color: 'var(--text-primary)'}}>Gestione Utenti</h2>
-                <p className="text-xs mt-0.5" style={{color: 'var(--text-secondary)'}}>Approva o rifiuta le richieste di accesso</p>
-                </div>
-                <UsersTab currentUser={user} />
-            </div>
-        )}
+        {tab === 'utenti' && user.ruolo === 'Admin' && <UsersTab currentUser={user} />}
       </main>
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
     </div>
   )
 }
