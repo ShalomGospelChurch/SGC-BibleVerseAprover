@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
+
 export async function POST(request: NextRequest) {
   try {
-    const { versetto_id, riferimento_ita, utente, ruolo, row_number } = await request.json()
+    const { versetto_id, riferimento_ita, utente, ruolo, row_number, numero } = await request.json()
 
     await supabase
       .from('versetti')
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       await fetch(process.env.WEBHOOK_URL!, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ versetto_id, riferimento_ita, stato: 'refused', row_number, approvato_da: utente, ruolo }),
+        body: JSON.stringify({ versetto_id, riferimento_ita, stato: 'refused', row_number, numero, approvato_da: utente, ruolo }),
       })
     } catch { }
 

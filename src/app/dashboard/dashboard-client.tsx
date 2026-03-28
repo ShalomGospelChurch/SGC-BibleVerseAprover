@@ -222,36 +222,50 @@ export default function DashboardClient({
 
   const pendingCount = verses.filter(v => v.stato === 'pending').length
 
-  const handleApprove = async (verse: Verse) => {
-    setLoadingId(verse.id)
-    const toastId = toast.loading('Salvando...')
-    try {
-        await fetch('/api/versetti/approve', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ versetto_id: verse.id, riferimento_ita: verse.riferimento_ita, utente: user.nome, ruolo: user.ruolo, row_number: verse.row_number }),
-        })
-        setVerses(vs => vs.map(v => v.id === verse.id ? { ...v, stato: 'approved', approvato_da: user.nome } : v))
-        setLogs(ls => [{ id: Date.now(), versetto_id: verse.id, riferimento: verse.riferimento_ita, azione: 'approved', utente: user.nome, ruolo: user.ruolo, created_at: new Date().toISOString() }, ...ls])
-        toast.success('Approvato!', { id: toastId })
-    } catch { toast.error('Errore!', { id: toastId }) }
-    setLoadingId(null)
-  }
+    const handleApprove = async (verse: Verse) => {
+        setLoadingId(verse.id)
+        const toastId = toast.loading('Salvando...')
+        try {
+            await fetch('/api/versetti/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    versetto_id: verse.id, 
+                    riferimento_ita: verse.riferimento_ita, 
+                    utente: user.nome, 
+                    ruolo: user.ruolo, 
+                    row_number: verse.row_number,
+                    numero: verse.numero  // ← aggiunto
+                }),
+            })
+            setVerses(vs => vs.map(v => v.id === verse.id ? { ...v, stato: 'approved', approvato_da: user.nome } : v))
+            setLogs(ls => [{ id: Date.now(), versetto_id: verse.id, riferimento: verse.riferimento_ita, azione: 'approved', utente: user.nome, ruolo: user.ruolo, created_at: new Date().toISOString() }, ...ls])
+            toast.success('Approvato!', { id: toastId })
+        } catch { toast.error('Errore!', { id: toastId }) }
+        setLoadingId(null)
+    }
 
-  const handleRefuse = async (verse: Verse) => {
+    const handleRefuse = async (verse: Verse) => {
     setLoadingId(verse.id)
     const toastId = toast.loading('Rigenerando...')
     try {
         await fetch('/api/versetti/refuse', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ versetto_id: verse.id, riferimento_ita: verse.riferimento_ita, utente: user.nome, ruolo: user.ruolo, row_number: verse.row_number }),
+            body: JSON.stringify({ 
+                versetto_id: verse.id, 
+                riferimento_ita: verse.riferimento_ita, 
+                utente: user.nome, 
+                ruolo: user.ruolo, 
+                row_number: verse.row_number,
+                numero: verse.numero  // ← aggiunto
+            }),
         })
         setVerses(vs => vs.map(v => v.id === verse.id ? { ...v, stato: 'refused' } : v))
         toast.success('Inviato a Gemini per rigenerazione', { id: toastId })
     } catch { toast.error('Errore!', { id: toastId }) }
     setLoadingId(null)
-  }
+    }
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
