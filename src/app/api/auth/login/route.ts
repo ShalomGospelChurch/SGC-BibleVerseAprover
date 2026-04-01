@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import bcrypt from 'bcryptjs'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,11 +15,18 @@ export async function POST(request: NextRequest) {
       .from('utenti')
       .select('*')
       .eq('username', username)
-      .eq('password_hash', password)
       .eq('stato', 'approved')
       .single()
 
     if (error || !data) {
+      return NextResponse.json(
+        { error: 'Credenziali non valide o account non ancora approvato' },
+        { status: 401 }
+      )
+    }
+
+    const passwordOk = await bcrypt.compare(password, data.password_hash)
+    if (!passwordOk) {
       return NextResponse.json(
         { error: 'Credenziali non valide o account non ancora approvato' },
         { status: 401 }
