@@ -6,7 +6,7 @@ import toast, { Toaster } from 'react-hot-toast'
 import type { Verse, LogEntry, Utente } from '@/lib/supabase'
 import { BookOpen, Copy } from 'lucide-react'
 
-// ─── VERSE CARD MODERNA ───────────────────────────────────────────
+// ─── VERSE CARD ───────────────────────────────────────────────────
 function VerseCard({
   verse, user, onApprove, onRefuse, loadingId
 }: {
@@ -25,8 +25,6 @@ function VerseCard({
       verse.stato === 'refused'  ? 'border-red-500/30 bg-red-500/5' :
       'border-white/5 bg-white/2 hover:bg-white/4 hover:border-white/10'
     }`}>
-      
-      {/* Header: Info & Status */}
       <div className="flex items-start justify-between mb-5">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
@@ -38,39 +36,29 @@ function VerseCard({
           <div className="flex items-center gap-2">
             <p className="text-xs text-gray-500 font-medium">{verse.riferimento_sin}</p>
             <span className="w-1 h-1 rounded-full bg-gray-800" />
-            <span className="text-[10px] uppercase tracking-widest text-indigo-400/80 font-bold">
-              {verse.tema}
-            </span>
+            <span className="text-[10px] uppercase tracking-widest text-indigo-400/80 font-bold">{verse.tema}</span>
           </div>
         </div>
-        
         <div className={`text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full border ${
-          verse.stato === 'pending'      ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
-          verse.stato === 'approved'     ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+          verse.stato === 'pending'  ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
+          verse.stato === 'approved' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
           'bg-red-500/10 text-red-500 border-red-500/20'
         }`}>
           {verse.stato === 'pending' ? 'Pending' : verse.stato}
         </div>
       </div>
 
-      {/* Texts */}
       <div className="grid gap-4 mb-6">
-        <div className="relative group/text">
+        <div>
           <p className="text-[10px] text-indigo-400/60 font-bold uppercase mb-1.5 px-1 tracking-tight">Italiano (NR)</p>
-          <p className="text-[15px] text-gray-200 leading-relaxed font-medium bg-white/3 p-4 rounded-xl border border-white/5">
-            {verse.testo_ita}
-          </p>
+          <p className="text-[15px] text-gray-200 leading-relaxed font-medium bg-white/3 p-4 rounded-xl border border-white/5">{verse.testo_ita}</p>
         </div>
-        
-        <div className="relative group/text">
+        <div>
           <p className="text-[10px] text-purple-400/60 font-bold uppercase mb-1.5 px-1 tracking-tight">Sinhala (OV)</p>
-          <p className="text-[17px] text-gray-300 leading-relaxed font-medium bg-white/3 p-4 rounded-xl border border-white/5" style={{lineHeight: '1.6'}}>
-            {verse.testo_sin}
-          </p>
+          <p className="text-[17px] text-gray-300 leading-relaxed font-medium bg-white/3 p-4 rounded-xl border border-white/5" style={{lineHeight: '1.6'}}>{verse.testo_sin}</p>
         </div>
       </div>
 
-      {/* Footer: Actions */}
       <div className="flex items-center justify-end pt-4 border-t border-white/5">
         {isLoading ? (
           <div className="flex items-center gap-2 text-gray-500">
@@ -118,14 +106,12 @@ function LogTable({ logs }: { logs: LogEntry[] }) {
           <tbody>
             {logs.map((log) => (
               <tr key={log.id} className="border-b border-white/2 hover:bg-white/2 transition-colors">
-                <td className="px-5 py-3.5 text-xs font-mono text-gray-500">
-                  {new Date(log.created_at).toLocaleString('it-IT')}
-                </td>
+                <td className="px-5 py-3.5 text-xs font-mono text-gray-500">{new Date(log.created_at).toLocaleString('it-IT')}</td>
                 <td className="px-5 py-3.5 text-sm text-gray-300 font-semibold">{log.riferimento}</td>
                 <td className="px-5 py-3.5">
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                    log.azione === 'approved'    ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                    log.azione === 'refused'     ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                    log.azione === 'approved' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                    log.azione === 'refused'  ? 'bg-red-500/10 text-red-400 border-red-500/20' :
                     'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
                   }`}>
                     {log.azione.toUpperCase()}
@@ -141,13 +127,13 @@ function LogTable({ logs }: { logs: LogEntry[] }) {
   )
 }
 
-// ─── USERS TAB (ADMIN ONLY) ──────────────────────────────
+// ─── USERS TAB ───────────────────────────────────────────
 type Utente2 = { id: number; nome: string; username: string; ruolo: string; stato: string; avatar: string; created_at: string }
 
-function UsersTab({ }: { currentUser: Utente }) {
+function UsersTab({ currentUser }: { currentUser: Utente }) {
   const [users, setUsers] = useState<Utente2[]>([])
   const [loading, setLoading] = useState(true)
-  const [, setLoadingId] = useState<number | null>(null)
+  const [loadingId, setLoadingId] = useState<number | null>(null)
 
   useEffect(() => {
     fetch('/api/utenti').then(r => r.json()).then(setUsers).finally(() => setLoading(false))
@@ -160,49 +146,77 @@ function UsersTab({ }: { currentUser: Utente }) {
     setLoadingId(null)
   }
 
+  const handleDisable = async (user: Utente2) => {
+    if (!confirm(`Disabilitare ${user.nome}?`)) return
+    setLoadingId(user.id)
+    await fetch('/api/utenti/disable', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: user.id }) })
+    setUsers(us => us.map(u => u.id === user.id ? { ...u, stato: 'disabled' } : u))
+    setLoadingId(null)
+  }
+
+  const handleRoleChange = async (user: Utente2, nuovoRuolo: string) => {
+    await fetch('/api/utenti/role', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: user.id, ruolo: nuovoRuolo }) })
+    setUsers(us => us.map(u => u.id === user.id ? { ...u, ruolo: nuovoRuolo } : u))
+  }
+
   if (loading) return <div className="flex justify-center py-20"><span className="w-5 h-5 border-2 border-white/10 border-t-white rounded-full animate-spin"/></div>
 
+  const ruoli = ['SuperAdmin', 'Admin', 'Pastore', 'Grafico', 'Revisore']
+
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl overflow-hidden border border-white/5 bg-white/2">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="border-b border-white/5 bg-white/1">
-              {['Utente', 'Ruolo', 'Stato', 'Data'].map(h => (
-                <th key={h} className="text-[10px] text-gray-500 uppercase tracking-widest px-5 py-3 font-bold">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(user => (
-              <tr key={user.id} className="border-b border-white/2">
-                <td className="px-5 py-3.5">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-indigo-600">
-                      {user.avatar}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-white">{user.nome}</p>
-                      <p className="text-[10px] text-gray-500">@{user.username}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-5 py-3.5 text-xs text-gray-300 font-medium">{user.ruolo}</td>
-                <td className="px-5 py-3.5">
-                    {user.stato === 'pending' ? (
-                        <div className="flex gap-2">
-                             <button onClick={() => handleApprove(user)} className="text-[10px] font-bold px-3 py-1 bg-white text-black rounded-lg hover:bg-gray-200 transition-all">Approva</button>
-                        </div>
-                    ) : (
-                        <span className="text-[10px] font-bold text-green-400 uppercase tracking-tight">Attivo</span>
-                    )}
-                </td>
-                <td className="px-5 py-3.5 text-xs font-mono text-gray-600">{new Date(user.created_at).toLocaleDateString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <div className="space-y-3">
+      {users.map(user => (
+        <div key={user.id} className="rounded-2xl border border-white/5 bg-white/2 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white bg-indigo-600 shrink-0">
+                {user.avatar}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">{user.nome}</p>
+                <p className="text-[10px] text-gray-500">@{user.username}</p>
+              </div>
+            </div>
+            <span className={`text-[10px] font-bold uppercase tracking-tight px-2 py-1 rounded-full border ${
+              user.stato === 'approved' ? 'text-green-400 border-green-500/20 bg-green-500/10' :
+              user.stato === 'disabled' ? 'text-red-400 border-red-500/20 bg-red-500/10' :
+              'text-yellow-400 border-yellow-500/20 bg-yellow-500/10'
+            }`}>
+              {user.stato}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between">
+            {currentUser.ruolo === 'SuperAdmin' && user.id !== currentUser.id ? (
+              <select
+                value={user.ruolo}
+                onChange={e => handleRoleChange(user, e.target.value)}
+                className="text-xs bg-white/5 border border-white/10 text-white rounded-lg px-2 py-1.5 outline-none">
+                {ruoli.map(r => <option key={r} value={r} className="bg-gray-900">{r}</option>)}
+              </select>
+            ) : (
+              <span className="text-xs text-gray-400 font-medium">{user.ruolo}</span>
+            )}
+
+            <div className="flex gap-2">
+              {user.stato === 'pending' && (
+                <button onClick={() => handleApprove(user)}
+                  disabled={loadingId === user.id}
+                  className="text-[10px] font-bold px-3 py-1.5 bg-white text-black rounded-lg hover:bg-gray-200 transition-all disabled:opacity-50">
+                  Approva
+                </button>
+              )}
+              {user.stato === 'approved' && user.id !== currentUser.id && currentUser.ruolo === 'SuperAdmin' && (
+                <button onClick={() => handleDisable(user)}
+                  disabled={loadingId === user.id}
+                  className="text-[10px] font-bold px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all disabled:opacity-50">
+                  Disabilita
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -223,50 +237,39 @@ export default function DashboardClient({
 
   const pendingCount = verses.filter(v => v.stato === 'pending').length
 
-    const handleApprove = async (verse: Verse) => {
-        setLoadingId(verse.id)
-        const toastId = toast.loading('Salvando...')
-        try {
-            await fetch('/api/versetti/approve', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    versetto_id: verse.id, 
-                    riferimento_ita: verse.riferimento_ita, 
-                    utente: user.nome, 
-                    ruolo: user.ruolo, 
-                    row_number: verse.row_number,
-                    numero: verse.numero  // ← aggiunto
-                }),
-            })
-            setVerses(vs => vs.map(v => v.id === verse.id ? { ...v, stato: 'approved', approvato_da: user.nome } : v))
-            setLogs(ls => [{ id: Date.now(), versetto_id: verse.id, riferimento: verse.riferimento_ita, azione: 'approved', utente: user.nome, ruolo: user.ruolo, created_at: new Date().toISOString() }, ...ls])
-            toast.success('Approvato!', { id: toastId })
-        } catch { toast.error('Errore!', { id: toastId }) }
-        setLoadingId(null)
-    }
+  const canApproveVerses = ['SuperAdmin', 'Admin', 'Pastore'].includes(user.ruolo)
+  const canManageUsers = ['SuperAdmin', 'Admin'].includes(user.ruolo)
 
-    const handleRefuse = async (verse: Verse) => {
+  const handleApprove = async (verse: Verse) => {
+    setLoadingId(verse.id)
+    const toastId = toast.loading('Salvando...')
+    try {
+      await fetch('/api/versetti/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ versetto_id: verse.id, riferimento_ita: verse.riferimento_ita, utente: user.nome, ruolo: user.ruolo, row_number: verse.row_number, numero: verse.numero }),
+      })
+      setVerses(vs => vs.map(v => v.id === verse.id ? { ...v, stato: 'approved', approvato_da: user.nome } : v))
+      setLogs(ls => [{ id: Date.now(), versetto_id: verse.id, riferimento: verse.riferimento_ita, azione: 'approved', utente: user.nome, ruolo: user.ruolo, created_at: new Date().toISOString() }, ...ls])
+      toast.success('Approvato!', { id: toastId })
+    } catch { toast.error('Errore!', { id: toastId }) }
+    setLoadingId(null)
+  }
+
+  const handleRefuse = async (verse: Verse) => {
     setLoadingId(verse.id)
     const toastId = toast.loading('Rigenerando...')
     try {
-        await fetch('/api/versetti/refuse', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                versetto_id: verse.id, 
-                riferimento_ita: verse.riferimento_ita, 
-                utente: user.nome, 
-                ruolo: user.ruolo, 
-                row_number: verse.row_number,
-                numero: verse.numero  // ← aggiunto
-            }),
-        })
-        setVerses(vs => vs.map(v => v.id === verse.id ? { ...v, stato: 'refused' } : v))
-        toast.success('Inviato a Gemini per rigenerazione', { id: toastId })
+      await fetch('/api/versetti/refuse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ versetto_id: verse.id, riferimento_ita: verse.riferimento_ita, utente: user.nome, ruolo: user.ruolo, row_number: verse.row_number, numero: verse.numero }),
+      })
+      setVerses(vs => vs.map(v => v.id === verse.id ? { ...v, stato: 'refused' } : v))
+      toast.success('Inviato a Gemini per rigenerazione', { id: toastId })
     } catch { toast.error('Errore!', { id: toastId }) }
     setLoadingId(null)
-    }
+  }
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -279,7 +282,7 @@ export default function DashboardClient({
       .map(v => `*${v.riferimento_sin}*\n${v.testo_sin}`)
       .join('\n\n')
     navigator.clipboard.writeText(text)
-    toast.success('Copiato Lista Sinhala !')
+    toast.success('Copiato Lista Sinhala!')
   }
 
   return (
@@ -315,22 +318,24 @@ export default function DashboardClient({
       {/* Tabs */}
       <div className="border-b border-white/5 bg-[#0a0a0c]/40">
         <div className="max-w-4xl mx-auto px-6 flex gap-8">
-            {['versetti', 'log', 'utenti'].map((t) => (
-                (t !== 'utenti' || user.ruolo === 'Admin') && (
-                    <button key={t} onClick={() => setTab(t as never)}
-                        className={`py-4 text-[11px] font-bold uppercase tracking-[0.2em] transition-all border-b-2 ${
-                        tab === t ? 'text-white border-white' : 'text-gray-600 border-transparent hover:text-gray-400'
-                        }`}>
-                        {t} {t === 'versetti' && pendingCount > 0 && <span className="ml-1 text-indigo-400">({pendingCount})</span>}
-                    </button>
-                )
-            ))}
+          {[
+            { key: 'versetti', label: 'Versetti', show: canApproveVerses },
+            { key: 'log', label: 'Log', show: canManageUsers },
+            { key: 'utenti', label: 'Utenti', show: canManageUsers },
+          ].filter(t => t.show).map(t => (
+            <button key={t.key} onClick={() => setTab(t.key as never)}
+              className={`py-4 text-[11px] font-bold uppercase tracking-[0.2em] transition-all border-b-2 ${
+                tab === t.key ? 'text-white border-white' : 'text-gray-600 border-transparent hover:text-gray-400'
+              }`}>
+              {t.label} {t.key === 'versetti' && pendingCount > 0 && <span className="ml-1 text-indigo-400">({pendingCount})</span>}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Main Content */}
       <main className="max-w-3xl mx-auto px-6 py-10">
-        {tab === 'versetti' && (
+        {tab === 'versetti' && canApproveVerses && (
           <div className="space-y-10">
             <div className="flex items-end justify-between px-2">
               <div>
@@ -342,7 +347,6 @@ export default function DashboardClient({
                 <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Totali</span>
               </div>
             </div>
-
             <div className="flex flex-col gap-6">
               {verses.map(v => (
                 <VerseCard key={v.id} verse={v} user={user} onApprove={handleApprove} onRefuse={handleRefuse} loadingId={loadingId} />
@@ -350,9 +354,8 @@ export default function DashboardClient({
             </div>
           </div>
         )}
-
-        {tab === 'log' && <LogTable logs={logs} />}
-        {tab === 'utenti' && user.ruolo === 'Admin' && <UsersTab currentUser={user} />}
+        {tab === 'log' && canManageUsers && <LogTable logs={logs} />}
+        {tab === 'utenti' && canManageUsers && <UsersTab currentUser={user} />}
       </main>
     </div>
   )
