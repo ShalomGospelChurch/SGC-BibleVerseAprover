@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import type { Verse, LogEntry, Utente } from '@/lib/supabase'
+import { BookOpen, Copy } from 'lucide-react'
 
 // ─── VERSE CARD MODERNA ───────────────────────────────────────────
 function VerseCard({
@@ -272,6 +273,15 @@ export default function DashboardClient({
     router.push('/login')
   }
 
+  const handleCopyList = () => {
+    const text = verses
+      .filter(v => v.stato !== 'refused')
+      .map(v => `*${v.riferimento_sin}*\n${v.testo_sin}`)
+      .join('\n\n')
+    navigator.clipboard.writeText(text)
+    toast.success('Copiato Lista Sinhala !')
+  }
+
   return (
     <div className="min-h-screen" style={{background: 'var(--bg-primary)'}}>
       <Toaster position="top-right" toastOptions={{ style: { background: '#121212', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
@@ -279,12 +289,18 @@ export default function DashboardClient({
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-white/5 bg-[#0a0a0c]/80 backdrop-blur-xl">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-lg bg-indigo-600 shadow-lg shadow-indigo-600/20 italic">✝</div>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-indigo-600 shadow-lg shadow-indigo-600/20">
+              <BookOpen size={18} className="text-white" />
+            </div>
             <div>
               <h1 className="text-sm font-bold text-white tracking-tight">SGC BibleVerse</h1>
               <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-0.5">Control Center</p>
             </div>
+            <button onClick={handleCopyList} title="Copia lista Sinhala"
+              className="text-gray-500 hover:text-white transition-colors p-1">
+              <Copy size={15} />
+            </button>
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:block text-right">
