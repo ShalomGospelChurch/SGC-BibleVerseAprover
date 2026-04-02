@@ -2,8 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 import bcrypt from 'bcryptjs'
 
 const supabase = createClient(
-  'https://iijsqjtqeeelfictrnaq.supabase.co',
-  'TUA_SERVICE_KEY'
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
 )
 
 async function migrate() {

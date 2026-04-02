@@ -337,8 +337,10 @@ export default function DashboardClient({
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:block text-right">
-              <p className="text-xs font-bold text-white">{user.nome}</p>
-              <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-tighter">{user.ruolo}</p>
+              <a href="/profilo" className="hidden sm:block text-right hover:opacity-80 transition-opacity">
+                <p className="text-xs font-bold text-white">{user.nome}</p>
+                <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-tighter">{user.ruolo}</p>
+              </a>
             </div>
             <button onClick={handleLogout} className="text-[10px] font-bold text-gray-500 hover:text-white uppercase transition-colors">Esci</button>
           </div>
