@@ -20,12 +20,12 @@ export async function getSession() {
 }
 
 export async function getVersettiOggi() {
-  const today = new Date().toISOString().split('T')[0]
   const { data, error } = await supabase
     .from('versetti')
     .select('*')
-    .eq('data', today)
-    .order('numero', { ascending: true })
+    .eq('stato', 'pending')
+    .order('created_at', { ascending: true })
+    .limit(7)
 
   if (error) return []
   return data

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import type { Verse, LogEntry, Utente } from '@/lib/supabase'
-import { BookOpen, Copy } from 'lucide-react'
+import { BookOpen, Copy, Sparkles} from 'lucide-react'
 
 // ─── VERSE CARD ───────────────────────────────────────────────────
 function VerseCard({
@@ -19,6 +19,7 @@ function VerseCard({
   const isLoading = loadingId === verse.id
   const isDone = verse.stato === 'approved' || verse.stato === 'refused'
 
+  
   return (
     <div className={`group rounded-2xl p-6 border transition-all duration-300 ${
       verse.stato === 'approved' ? 'border-green-500/30 bg-green-500/5' :
@@ -252,21 +253,22 @@ export default function DashboardClient({
       setVerses(vs => vs.map(v => v.id === verse.id ? { ...v, stato: 'approved', approvato_da: user.nome } : v))
       setLogs(ls => [{ id: Date.now(), versetto_id: verse.id, riferimento: verse.riferimento_ita, azione: 'approved', utente: user.nome, ruolo: user.ruolo, created_at: new Date().toISOString() }, ...ls])
       toast.success('Approvato!', { id: toastId })
+      router.refresh()
     } catch { toast.error('Errore!', { id: toastId }) }
     setLoadingId(null)
   }
 
   const handleRefuse = async (verse: Verse) => {
     setLoadingId(verse.id)
-    const toastId = toast.loading('Rigenerando...')
+    const toastId = toast.loading('Rimuovendo...')
     try {
       await fetch('/api/versetti/refuse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ versetto_id: verse.id, riferimento_ita: verse.riferimento_ita, utente: user.nome, ruolo: user.ruolo, row_number: verse.row_number, numero: verse.numero }),
+        body: JSON.stringify({ versetto_id: verse.id, riferimento_ita: verse.riferimento_ita, utente: user.nome, ruolo: user.ruolo }),
       })
-      setVerses(vs => vs.map(v => v.id === verse.id ? { ...v, stato: 'refused' } : v))
-      toast.success('Inviato a Gemini per rigenerazione', { id: toastId })
+      setVerses(vs => vs.filter(v => v.id !== verse.id))
+      toast.success('Versetto rimosso!', { id: toastId })
     } catch { toast.error('Errore!', { id: toastId }) }
     setLoadingId(null)
   }
@@ -284,6 +286,24 @@ export default function DashboardClient({
     navigator.clipboard.writeText(text)
     toast.success('Copiato Lista Sinhala!')
   }
+ 
+  const [generando, setGenerando] = useState(false)
+
+  const handleGenera = async () => {
+    if (!confirm('Generare 60 nuovi versetti con Gemini?')) return
+    setGenerando(true)
+    const toastId = toast.loading('Gemini sta generando 60 versetti...')
+    try {
+      const res = await fetch('/api/versetti/genera', { method: 'POST' })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      toast.success(`${data.count} versetti generati!`, { id: toastId })
+    } catch {
+      toast.error('Errore generazione', { id: toastId })
+    }
+    setGenerando(false)
+  }
+
 
   return (
     <div className="min-h-screen" style={{background: 'var(--bg-primary)'}}>
@@ -304,6 +324,16 @@ export default function DashboardClient({
               className="text-gray-500 hover:text-white transition-colors p-1">
               <Copy size={15} />
             </button>
+            
+            {user.ruolo === 'SuperAdmin' && (
+              <button onClick={handleGenera} disabled={generando} title="Genera 60 versetti"
+                className="text-gray-500 hover:text-indigo-400 transition-colors p-1">
+                {generando 
+                  ? <span className="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin block" />
+                  : <Sparkles size={15} />
+                }
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:block text-right">
@@ -343,14 +373,18 @@ export default function DashboardClient({
                 <p className="text-sm text-gray-500 font-medium">Revisiona i contenuti generati da Gemini per oggi.</p>
               </div>
               <div className="text-right">
-                <span className="text-3xl font-black text-white/10 block leading-none">{verses.length}</span>
+                <span className="text-3xl font-black text-white/10 block leading-none">
+                  {verses.filter(v => v.stato === 'pending').length}
+                </span>
                 <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Totali</span>
               </div>
             </div>
             <div className="flex flex-col gap-6">
-              {verses.map(v => (
-                <VerseCard key={v.id} verse={v} user={user} onApprove={handleApprove} onRefuse={handleRefuse} loadingId={loadingId} />
-              ))}
+              { verses
+                .map(v => (
+                  <VerseCard key={v.id} verse={v} user={user} onApprove={handleApprove} onRefuse={handleRefuse} loadingId={loadingId} />
+                ))
+              }
             </div>
           </div>
         )}
