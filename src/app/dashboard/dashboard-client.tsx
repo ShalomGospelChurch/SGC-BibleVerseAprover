@@ -187,6 +187,21 @@ export default function DashboardClient({
     register()
   }, [user.ruolo, stats.pending])
 
+  useEffect(() => {
+    let startY = 0
+    const onTouchStart = (e: TouchEvent) => { startY = e.touches[0].clientY }
+    const onTouchEnd = (e: TouchEvent) => {
+      const diff = e.changedTouches[0].clientY - startY
+      if (diff > 100 && window.scrollY === 0) window.location.reload()
+    }
+    document.addEventListener('touchstart', onTouchStart)
+    document.addEventListener('touchend', onTouchEnd)
+    return () => {
+      document.removeEventListener('touchstart', onTouchStart)
+      document.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [])
+
   return (
     <div className="min-h-screen" style={{background: 'var(--bg-primary)'}}>
       <Toaster position="top-right" toastOptions={{ style: { background: '#121212', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
@@ -278,12 +293,12 @@ export default function DashboardClient({
             {verses.length === 0 ? (
               <div className="text-center py-20">
                 <p className="text-gray-500 text-sm">Nessun versetto in attesa.</p>
-                {user.ruolo === 'SuperAdmin' && (
-                  <button onClick={handleGenera} disabled={generando}
+               
+                  <button onClick={() => window.location.reload()}
                     className="mt-4 px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all">
-                    ✨ Genera nuovi versetti
+                    Aggiorna
                   </button>
-                )}
+              
               </div>
             ) : (
               verses.map(v => (
