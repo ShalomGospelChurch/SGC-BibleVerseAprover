@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import type { Verse, Utente } from '@/lib/supabase'
-import { BookOpen, Copy, Sparkles } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Header from '@/components/Header'
 
@@ -85,7 +84,6 @@ export default function DashboardClient({
 }) {
   const [verses, setVerses] = useState<Verse[]>(initialVerses)
   const [loadingId, setLoadingId] = useState<number | null>(null)
-  const [generando, setGenerando] = useState(false)
   const router = useRouter()
 
   const pendingCount = verses.length

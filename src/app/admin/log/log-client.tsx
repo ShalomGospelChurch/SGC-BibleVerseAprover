@@ -1,7 +1,6 @@
 'use client'
 
 import type { LogEntry, Utente } from '@/lib/supabase'
-import { BookOpen, ArrowLeft } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Header from '@/components/Header';
 

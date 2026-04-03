@@ -5,7 +5,6 @@ import type { Utente } from '@/lib/supabase'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import router from 'next/router'
-import { refresh } from 'next/cache'
 
 interface HeaderProps {
   user: Utente

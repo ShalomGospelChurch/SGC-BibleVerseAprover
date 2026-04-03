@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 import type { Utente } from '@/lib/supabase'
-import { BookOpen, ArrowLeft } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Header from '@/components/Header'
 

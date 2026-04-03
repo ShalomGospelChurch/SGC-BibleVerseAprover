@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import type { Utente } from '@/lib/supabase'
-import { BookOpen } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Header from '@/components/Header'
 
