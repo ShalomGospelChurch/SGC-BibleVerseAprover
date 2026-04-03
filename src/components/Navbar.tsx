@@ -19,7 +19,7 @@ export default function Navbar({ user }: { user: Utente }) {
   ].filter(t => t.show)
 
   return (
-    <div className="border-b border-white/5 bg-[#0a0a0c]/40">
+    <div className="border-b border-white/5 bg-[#0a0a0c]/40 overflow-x-auto">
       <div className="max-w-4xl mx-auto px-6 flex gap-8">
         {tabs.map(t => (
           <a key={t.href} href={t.href}

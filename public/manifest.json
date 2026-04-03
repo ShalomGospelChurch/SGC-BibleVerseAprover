@@ -1,0 +1,16 @@
+{
+  "name": "SGC BibleVerse",
+  "short_name": "SGC Bible",
+  "description": "SGC BibleVerse Control Center",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0a0a0c",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "256x256",
+      "type": "image/x-icon"
+    }
+  ]
+}
