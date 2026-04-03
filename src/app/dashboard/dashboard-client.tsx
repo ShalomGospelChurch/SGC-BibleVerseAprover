@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import type { Verse, Utente } from '@/lib/supabase'
@@ -76,10 +76,11 @@ function VerseCard({
 
 // ─── DASHBOARD MAIN ──────────────────────────────────────
 export default function DashboardClient({
-  user, initialVerses
+  user, initialVerses, stats
 }: {
   user: Utente
   initialVerses: Verse[]
+  stats: { pending: number; approvati: number; completati: number }
 }) {
   const [verses, setVerses] = useState<Verse[]>(initialVerses)
   const [loadingId, setLoadingId] = useState<number | null>(null)
@@ -122,6 +123,8 @@ export default function DashboardClient({
       })
       setVerses(vs => vs.filter(v => v.id !== verse.id))
       toast.success('Rimosso!', { id: toastId })
+      toast.success('Rimosso!', { id: toastId })
+      router.refresh()
     } catch { toast.error('Errore!', { id: toastId }) }
     setLoadingId(null)
   }
@@ -154,6 +157,35 @@ export default function DashboardClient({
     }
     setGenerando(false)
   }
+
+  useEffect(() => {
+    if (user.ruolo !== 'SuperAdmin') return
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
+
+    const register = async () => {
+      const reg = await navigator.serviceWorker.register('/sw.js')
+      const permission = await Notification.requestPermission()
+      if (permission !== 'granted') return
+
+      const existing = await reg.pushManager.getSubscription()
+      const sub = existing || await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      })
+
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub)
+      })
+
+      if (stats.pending < 10) {
+        await fetch('/api/push/send', { method: 'POST' })
+      }
+    }
+
+    register()
+  }, [user.ruolo, stats.pending])
 
   return (
     <div className="min-h-screen" style={{background: 'var(--bg-primary)'}}>
@@ -198,6 +230,35 @@ export default function DashboardClient({
 
       {/* Navbar */}
       <Navbar user={user} />
+
+
+      {user.ruolo === 'SuperAdmin' && (
+        <div className="max-w-3xl mx-auto px-6 py-4">
+          {stats.pending < 10 && (
+            <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10">
+              <span className="text-yellow-400 text-xs font-bold uppercase tracking-widest">!</span>
+              <div>
+                <p className="text-xs font-bold text-yellow-400">Versetti in esaurimento</p>
+                <p className="text-[10px] text-yellow-400/70">Solo {stats.pending} pending rimasti — considera di generarne altri con il bottone in alto</p>
+              </div>
+            </div>
+          )}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-xl border border-white/5 bg-white/2 p-4 text-center">
+              <span className="text-2xl font-black text-yellow-400">{stats.pending}</span>
+              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-1">Pending</p>
+            </div>
+            <div className="rounded-xl border border-white/5 bg-white/2 p-4 text-center">
+              <span className="text-2xl font-black text-green-400">{stats.approvati}</span>
+              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-1">Approvati</p>
+            </div>
+            <div className="rounded-xl border border-white/5 bg-white/2 p-4 text-center">
+              <span className="text-2xl font-black text-indigo-400">{stats.completati}</span>
+              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-1">Completati</p>
+            </div>
+          </div>
+        </div>
+      )}
 
 
       {/* Main Content */}

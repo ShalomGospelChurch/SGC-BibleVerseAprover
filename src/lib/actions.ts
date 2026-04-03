@@ -63,3 +63,17 @@ export async function getVersettiUsati() {
   if (error) return []
   return data
 }
+
+export async function getStats() {
+  const [pending, approvati, completati] = await Promise.all([
+    supabase.from('versetti').select('id', { count: 'exact', head: true }).eq('stato', 'pending'),
+    supabase.from('versetti').select('id', { count: 'exact', head: true }).eq('stato', 'approved'),
+    supabase.from('versetti').select('id', { count: 'exact', head: true }).eq('immagine_stato', 'done'),
+  ])
+
+  return {
+    pending: pending.count || 0,
+    approvati: approvati.count || 0,
+    completati: completati.count || 0,
+  }
+}
