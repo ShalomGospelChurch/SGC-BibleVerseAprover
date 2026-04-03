@@ -3,32 +3,12 @@
 import type { LogEntry, Utente } from '@/lib/supabase'
 import { BookOpen, ArrowLeft } from 'lucide-react'
 import Navbar from '@/components/Navbar'
+import Header from '@/components/Header';
 
 export default function LogClient({ user, initialLogs }: { user: Utente; initialLogs: LogEntry[] }) {
   return (
     <div className="min-h-screen" style={{background: 'var(--bg-primary)'}}>
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-[#0a0a0c]/80 backdrop-blur-xl">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-indigo-600 shadow-lg shadow-indigo-600/20">
-              <BookOpen size={18} className="text-white" />
-            </div>
-            <div>
-              <h1 className="text-sm font-bold text-white tracking-tight">SGC BibleVerse</h1>
-              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-0.5">Admin</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <a href="/profilo" className="hidden sm:block text-right hover:opacity-80 transition-opacity">
-              <p className="text-xs font-bold text-white">{user.nome}</p>
-              <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-tighter">{user.ruolo}</p>
-            </a>
-            <a href="/dashboard" className="flex items-center gap-1 text-[10px] font-bold text-gray-500 hover:text-white uppercase transition-colors">
-              <ArrowLeft size={12} /> Dashboard
-            </a>
-          </div>
-        </div>
-      </header>
+      <Header user={user} subtitle="Logs" />
 
       <Navbar user={user} />
 
