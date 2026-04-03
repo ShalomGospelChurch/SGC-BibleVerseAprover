@@ -5,6 +5,7 @@ import type { Utente } from '@/lib/supabase'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import router from 'next/router'
+import { refresh } from 'next/cache'
 
 interface HeaderProps {
   user: Utente
@@ -47,7 +48,7 @@ export default function Header({ user, subtitle = 'Control Center' }: HeaderProp
         <header className="sticky top-0 z-40 border-b border-white/5 bg-[#0a0a0c]/80 backdrop-blur-xl">
             <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-indigo-600 shadow-lg shadow-indigo-600/20">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-indigo-600 shadow-lg shadow-indigo-600/20" onClick={() => window.location.reload()} style={{ cursor: 'pointer' }}>
                     <BookOpen size={18} className="text-white" />
                 </div>
                 <div>
