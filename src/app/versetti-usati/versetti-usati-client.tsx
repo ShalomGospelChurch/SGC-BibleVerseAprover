@@ -47,7 +47,7 @@ export default function VersettiUsatiClient({ user, initialVersetti }: { user: U
             value={search} onChange={e => setSearch(e.target.value)}
             className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-indigo-500" />
 
-          <div className="rounded-2xl overflow-hidden border border-white/5 bg-white/2">
+          <div className="rounded-2xl overflow-hidden overflow-x-auto border border-white/5 bg-white/2">
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-white/5">
