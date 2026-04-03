@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect } from 'next/navigation'
 import { getSession, getVersettiOggi } from '@/lib/actions'
 import DashboardClient from './dashboard-client'

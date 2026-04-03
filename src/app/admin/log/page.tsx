@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect } from 'next/navigation'
 import { getSession, getLogs } from '@/lib/actions'
 import LogClient from './log-client'

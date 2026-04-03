@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect } from 'next/navigation'
 import { getSession, getVersettiUsati } from '@/lib/actions'
 import VersettiUsatiClient from './versetti-usati-client'
