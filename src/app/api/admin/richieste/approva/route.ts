@@ -8,22 +8,16 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    const { versetto_id, riferimento_ita, utente, ruolo } = await request.json()
+    const { id, utente_id, tipo, valore_nuovo } = await request.json()
 
-    // Prima il log (mentre il versetto esiste ancora)
-    await supabase.from('log_azioni').insert([
-      { versetto_id, riferimento: riferimento_ita, azione: 'refused', utente, ruolo },
-    ])
+    // Aggiorna utente
+    await supabase.from('utenti').update({ [tipo]: valore_nuovo }).eq('id', utente_id)
 
-    // Poi elimina
-    await supabase
-      .from('versetti')
-      .delete()
-      .eq('id', versetto_id)
+    // Aggiorna stato richiesta
+    await supabase.from('richieste_profilo').update({ stato: 'approved' }).eq('id', id)
 
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'Errore' }, { status: 500 })
   }
 }
-

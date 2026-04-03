@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { refresh } from 'next/cache'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,14 +10,28 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    const { tipo, valore_nuovo } = await request.json()
+    const { currentPassword, newPassword } = await request.json()
+    
     const cookieStore = await cookies()
     const session = cookieStore.get('sgc-session')
     if (!session) return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })
+    
     const { id } = JSON.parse(session.value)
-
-    await supabase.from('utenti').update({ [tipo]: valore_nuovo }).eq('id', id)
-
+    
+    const { data: user } = await supabase
+      .from('utenti')
+      .select('password_hash')
+      .eq('id', id)
+      .single()
+    
+    if (!user) return NextResponse.json({ error: 'Utente non trovato' }, { status: 404 })
+    
+    const ok = await bcrypt.compare(currentPassword, user.password_hash)
+    if (!ok) return NextResponse.json({ error: 'Password attuale errata' }, { status: 401 })
+    
+    const hashed = await bcrypt.hash(newPassword, 10)
+    await supabase.from('utenti').update({ password_hash: hashed }).eq('id', id)
+    
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'Errore del server' }, { status: 500 })

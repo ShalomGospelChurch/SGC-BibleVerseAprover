@@ -8,24 +8,19 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    const { versetto_id, riferimento_ita, riferimento_sin, utente, ruolo } = await request.json()
+    const { versetto_id, riferimento_ita, utente, ruolo } = await request.json()
 
-    // Aggiorna stato in versetti
     await supabase
       .from('versetti')
-      .update({ stato: 'approved', approvato_da: utente, updated_at: new Date().toISOString() })
+      .update({ immagine_stato: 'done' })
       .eq('id', versetto_id)
 
-    // Aggiungi a versetti_usati (blacklist Gemini)
-    await supabase.from('versetti_usati').insert({
-      riferimento_ita,
-      riferimento_sin: riferimento_sin || null,
-    })
-
-    // Log
     await supabase.from('log_azioni').insert({
-      versetto_id, riferimento: riferimento_ita,
-      azione: 'approved', utente, ruolo,
+      versetto_id,
+      riferimento: riferimento_ita,
+      azione: 'immagine_completata',
+      utente,
+      ruolo,
     })
 
     return NextResponse.json({ success: true })

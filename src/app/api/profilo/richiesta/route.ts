@@ -13,17 +13,21 @@ export async function POST(request: NextRequest) {
     const cookieStore = await cookies()
     const session = cookieStore.get('sgc-session')
     if (!session) return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })
-    const { id } = JSON.parse(session.value)
+    const { id, nome } = JSON.parse(session.value)
 
-    await supabase.from('richieste_profilo').insert({
-      utente_id: id,
+    const { error } = await supabase.from('richieste_profilo').insert({
+      utente_id: parseInt(id),
+      utente_nome: nome,
       tipo,
       valore_nuovo,
       stato: 'pending'
     })
 
+    if (error) throw error
+
     return NextResponse.json({ success: true })
-  } catch {
+  } catch (err) {
+    console.error(err)
     return NextResponse.json({ error: 'Errore' }, { status: 500 })
   }
 }

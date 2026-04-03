@@ -1,14 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
-import type { Verse, LogEntry, Utente } from '@/lib/supabase'
-import { BookOpen, Copy, Sparkles} from 'lucide-react'
+import type { Verse, Utente } from '@/lib/supabase'
+import { BookOpen, Copy, Sparkles } from 'lucide-react'
+import Navbar from '@/components/Navbar'
 
 // ─── VERSE CARD ───────────────────────────────────────────────────
 function VerseCard({
-  verse, user, onApprove, onRefuse, loadingId
+  verse,  onApprove, onRefuse, loadingId
 }: {
   verse: Verse
   user: Utente
@@ -17,15 +18,9 @@ function VerseCard({
   loadingId: number | null
 }) {
   const isLoading = loadingId === verse.id
-  const isDone = verse.stato === 'approved' || verse.stato === 'refused'
 
-  
   return (
-    <div className={`group rounded-2xl p-6 border transition-all duration-300 ${
-      verse.stato === 'approved' ? 'border-green-500/30 bg-green-500/5' :
-      verse.stato === 'refused'  ? 'border-red-500/30 bg-red-500/5' :
-      'border-white/5 bg-white/2 hover:bg-white/4 hover:border-white/10'
-    }`}>
+    <div className="group rounded-2xl p-6 border border-white/5 bg-white/2 hover:bg-white/4 hover:border-white/10 transition-all duration-300">
       <div className="flex items-start justify-between mb-5">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
@@ -40,12 +35,8 @@ function VerseCard({
             <span className="text-[10px] uppercase tracking-widest text-indigo-400/80 font-bold">{verse.tema}</span>
           </div>
         </div>
-        <div className={`text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full border ${
-          verse.stato === 'pending'  ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
-          verse.stato === 'approved' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-          'bg-red-500/10 text-red-500 border-red-500/20'
-        }`}>
-          {verse.stato === 'pending' ? 'Pending' : verse.stato}
+        <div className="text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full border bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
+          Pending
         </div>
       </div>
 
@@ -66,10 +57,6 @@ function VerseCard({
             <span className="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
             <span className="text-xs font-medium italic">Processing...</span>
           </div>
-        ) : isDone ? (
-          <p className="text-xs text-gray-500 font-medium italic">
-            {verse.stato === 'approved' ? `✓ Approved by ${verse.approvato_da || user.nome}` : '✕ Refused'}
-          </p>
         ) : (
           <div className="flex gap-3">
             <button onClick={() => onRefuse(verse)}
@@ -87,159 +74,19 @@ function VerseCard({
   )
 }
 
-// ─── LOG TABLE ────────────────────────────────────────────
-function LogTable({ logs }: { logs: LogEntry[] }) {
-  return (
-    <div className="rounded-2xl overflow-hidden border border-white/5 bg-white/2">
-      <div className="px-5 py-4 border-b border-white/5 bg-white/1">
-        <h3 className="text-sm font-bold text-white">Log Azioni</h3>
-        <p className="text-xs text-gray-500 mt-0.5">{logs.length} azioni registrate</p>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="border-b border-white/5">
-              {['Timestamp','Riferimento','Azione','Utente'].map(h => (
-                <th key={h} className="text-[10px] text-gray-500 uppercase tracking-widest px-5 py-3 font-bold">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {logs.map((log) => (
-              <tr key={log.id} className="border-b border-white/2 hover:bg-white/2 transition-colors">
-                <td className="px-5 py-3.5 text-xs font-mono text-gray-500">{new Date(log.created_at).toLocaleString('it-IT')}</td>
-                <td className="px-5 py-3.5 text-sm text-gray-300 font-semibold">{log.riferimento}</td>
-                <td className="px-5 py-3.5">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                    log.azione === 'approved' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                    log.azione === 'refused'  ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                    'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                  }`}>
-                    {log.azione.toUpperCase()}
-                  </span>
-                </td>
-                <td className="px-5 py-3.5 text-xs text-gray-400 font-medium">{log.utente}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-// ─── USERS TAB ───────────────────────────────────────────
-type Utente2 = { id: number; nome: string; username: string; ruolo: string; stato: string; avatar: string; created_at: string }
-
-function UsersTab({ currentUser }: { currentUser: Utente }) {
-  const [users, setUsers] = useState<Utente2[]>([])
-  const [loading, setLoading] = useState(true)
-  const [loadingId, setLoadingId] = useState<number | null>(null)
-
-  useEffect(() => {
-    fetch('/api/utenti').then(r => r.json()).then(setUsers).finally(() => setLoading(false))
-  }, [])
-
-  const handleApprove = async (user: Utente2) => {
-    setLoadingId(user.id)
-    await fetch('/api/utenti/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: user.id, ruolo: user.ruolo }) })
-    setUsers(us => us.map(u => u.id === user.id ? { ...u, stato: 'approved' } : u))
-    setLoadingId(null)
-  }
-
-  const handleDisable = async (user: Utente2) => {
-    if (!confirm(`Disabilitare ${user.nome}?`)) return
-    setLoadingId(user.id)
-    await fetch('/api/utenti/disable', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: user.id }) })
-    setUsers(us => us.map(u => u.id === user.id ? { ...u, stato: 'disabled' } : u))
-    setLoadingId(null)
-  }
-
-  const handleRoleChange = async (user: Utente2, nuovoRuolo: string) => {
-    await fetch('/api/utenti/role', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: user.id, ruolo: nuovoRuolo }) })
-    setUsers(us => us.map(u => u.id === user.id ? { ...u, ruolo: nuovoRuolo } : u))
-  }
-
-  if (loading) return <div className="flex justify-center py-20"><span className="w-5 h-5 border-2 border-white/10 border-t-white rounded-full animate-spin"/></div>
-
-  const ruoli = ['SuperAdmin', 'Admin', 'Pastore', 'Grafico', 'Revisore']
-
-  return (
-    <div className="space-y-3">
-      {users.map(user => (
-        <div key={user.id} className="rounded-2xl border border-white/5 bg-white/2 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white bg-indigo-600 shrink-0">
-                {user.avatar}
-              </div>
-              <div>
-                <p className="text-sm font-bold text-white">{user.nome}</p>
-                <p className="text-[10px] text-gray-500">@{user.username}</p>
-              </div>
-            </div>
-            <span className={`text-[10px] font-bold uppercase tracking-tight px-2 py-1 rounded-full border ${
-              user.stato === 'approved' ? 'text-green-400 border-green-500/20 bg-green-500/10' :
-              user.stato === 'disabled' ? 'text-red-400 border-red-500/20 bg-red-500/10' :
-              'text-yellow-400 border-yellow-500/20 bg-yellow-500/10'
-            }`}>
-              {user.stato}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            {currentUser.ruolo === 'SuperAdmin' && user.id !== currentUser.id ? (
-              <select
-                value={user.ruolo}
-                onChange={e => handleRoleChange(user, e.target.value)}
-                className="text-xs bg-white/5 border border-white/10 text-white rounded-lg px-2 py-1.5 outline-none">
-                {ruoli.map(r => <option key={r} value={r} className="bg-gray-900">{r}</option>)}
-              </select>
-            ) : (
-              <span className="text-xs text-gray-400 font-medium">{user.ruolo}</span>
-            )}
-
-            <div className="flex gap-2">
-              {user.stato === 'pending' && (
-                <button onClick={() => handleApprove(user)}
-                  disabled={loadingId === user.id}
-                  className="text-[10px] font-bold px-3 py-1.5 bg-white text-black rounded-lg hover:bg-gray-200 transition-all disabled:opacity-50">
-                  Approva
-                </button>
-              )}
-              {user.stato === 'approved' && user.id !== currentUser.id && currentUser.ruolo === 'SuperAdmin' && (
-                <button onClick={() => handleDisable(user)}
-                  disabled={loadingId === user.id}
-                  className="text-[10px] font-bold px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all disabled:opacity-50">
-                  Disabilita
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 // ─── DASHBOARD MAIN ──────────────────────────────────────
 export default function DashboardClient({
-  user, initialVerses, initialLogs
+  user, initialVerses
 }: {
   user: Utente
   initialVerses: Verse[]
-  initialLogs: LogEntry[]
 }) {
-  const [tab, setTab] = useState<'versetti' | 'log' | 'utenti'>('versetti')
   const [verses, setVerses] = useState<Verse[]>(initialVerses)
-  const [logs, setLogs] = useState<LogEntry[]>(initialLogs)
   const [loadingId, setLoadingId] = useState<number | null>(null)
+  const [generando, setGenerando] = useState(false)
   const router = useRouter()
 
-  const pendingCount = verses.filter(v => v.stato === 'pending').length
-
-  const canApproveVerses = ['SuperAdmin', 'Admin', 'Pastore'].includes(user.ruolo)
-  const canManageUsers = ['SuperAdmin', 'Admin'].includes(user.ruolo)
+  const pendingCount = verses.length
 
   const handleApprove = async (verse: Verse) => {
     setLoadingId(verse.id)
@@ -248,10 +95,16 @@ export default function DashboardClient({
       await fetch('/api/versetti/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ versetto_id: verse.id, riferimento_ita: verse.riferimento_ita, utente: user.nome, ruolo: user.ruolo, row_number: verse.row_number, numero: verse.numero }),
+        body: JSON.stringify({
+          versetto_id: verse.id,
+          riferimento_ita: verse.riferimento_ita,
+          riferimento_sin: verse.riferimento_sin,
+          utente: user.nome,
+          ruolo: user.ruolo,
+          numero: verse.numero
+        }),
       })
-      setVerses(vs => vs.map(v => v.id === verse.id ? { ...v, stato: 'approved', approvato_da: user.nome } : v))
-      setLogs(ls => [{ id: Date.now(), versetto_id: verse.id, riferimento: verse.riferimento_ita, azione: 'approved', utente: user.nome, ruolo: user.ruolo, created_at: new Date().toISOString() }, ...ls])
+      setVerses(vs => vs.filter(v => v.id !== verse.id))
       toast.success('Approvato!', { id: toastId })
       router.refresh()
     } catch { toast.error('Errore!', { id: toastId }) }
@@ -268,7 +121,7 @@ export default function DashboardClient({
         body: JSON.stringify({ versetto_id: verse.id, riferimento_ita: verse.riferimento_ita, utente: user.nome, ruolo: user.ruolo }),
       })
       setVerses(vs => vs.filter(v => v.id !== verse.id))
-      toast.success('Versetto rimosso!', { id: toastId })
+      toast.success('Rimosso!', { id: toastId })
     } catch { toast.error('Errore!', { id: toastId }) }
     setLoadingId(null)
   }
@@ -280,30 +133,27 @@ export default function DashboardClient({
 
   const handleCopyList = () => {
     const text = verses
-      .filter(v => v.stato !== 'refused')
       .map(v => `*${v.riferimento_sin}*\n${v.testo_sin}`)
       .join('\n\n')
     navigator.clipboard.writeText(text)
     toast.success('Copiato Lista Sinhala!')
   }
- 
-  const [generando, setGenerando] = useState(false)
 
   const handleGenera = async () => {
-    if (!confirm('Generare 60 nuovi versetti con Gemini?')) return
+    if (!confirm('Generare nuovi versetti con Gemini?')) return
     setGenerando(true)
-    const toastId = toast.loading('Gemini sta generando 60 versetti...')
+    const toastId = toast.loading('Gemini sta generando versetti...')
     try {
       const res = await fetch('/api/versetti/genera', { method: 'POST' })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       toast.success(`${data.count} versetti generati!`, { id: toastId })
+      router.refresh()
     } catch {
       toast.error('Errore generazione', { id: toastId })
     }
     setGenerando(false)
   }
-
 
   return (
     <div className="min-h-screen" style={{background: 'var(--bg-primary)'}}>
@@ -324,74 +174,63 @@ export default function DashboardClient({
               className="text-gray-500 hover:text-white transition-colors p-1">
               <Copy size={15} />
             </button>
-            
             {user.ruolo === 'SuperAdmin' && (
-              <button onClick={handleGenera} disabled={generando} title="Genera 60 versetti"
+              <button onClick={handleGenera} disabled={generando} title="Genera versetti"
                 className="text-gray-500 hover:text-indigo-400 transition-colors p-1">
-                {generando 
+                {generando
                   ? <span className="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin block" />
                   : <Sparkles size={15} />
                 }
               </button>
             )}
+              
+
           </div>
           <div className="flex items-center gap-4">
-            <div className="hidden sm:block text-right">
-              <a href="/profilo" className="hidden sm:block text-right hover:opacity-80 transition-opacity">
-                <p className="text-xs font-bold text-white">{user.nome}</p>
-                <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-tighter">{user.ruolo}</p>
-              </a>
-            </div>
+            <a href="/profilo" className="hidden sm:block text-right hover:opacity-80 transition-opacity">
+              <p className="text-xs font-bold text-white">{user.nome}</p>
+              <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-tighter">{user.ruolo}</p>
+            </a>
             <button onClick={handleLogout} className="text-[10px] font-bold text-gray-500 hover:text-white uppercase transition-colors">Esci</button>
           </div>
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="border-b border-white/5 bg-[#0a0a0c]/40">
-        <div className="max-w-4xl mx-auto px-6 flex gap-8">
-          {[
-            { key: 'versetti', label: 'Versetti', show: canApproveVerses },
-            { key: 'log', label: 'Log', show: canManageUsers },
-            { key: 'utenti', label: 'Utenti', show: canManageUsers },
-          ].filter(t => t.show).map(t => (
-            <button key={t.key} onClick={() => setTab(t.key as never)}
-              className={`py-4 text-[11px] font-bold uppercase tracking-[0.2em] transition-all border-b-2 ${
-                tab === t.key ? 'text-white border-white' : 'text-gray-600 border-transparent hover:text-gray-400'
-              }`}>
-              {t.label} {t.key === 'versetti' && pendingCount > 0 && <span className="ml-1 text-indigo-400">({pendingCount})</span>}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Navbar */}
+      <Navbar user={user} />
+
 
       {/* Main Content */}
       <main className="max-w-3xl mx-auto px-6 py-10">
-        {tab === 'versetti' && canApproveVerses && (
-          <div className="space-y-10">
-            <div className="flex items-end justify-between px-2">
-              <div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">Daily Verses</h2>
-                <p className="text-sm text-gray-500 font-medium">Revisiona i contenuti generati da Gemini per oggi.</p>
-              </div>
-              <div className="text-right">
-                <span className="text-3xl font-black text-white/10 block leading-none">
-                  {verses.filter(v => v.stato === 'pending').length}
-                </span>
-                <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Totali</span>
-              </div>
+        <div className="space-y-10">
+          <div className="flex items-end justify-between px-2">
+            <div>
+              <h2 className="text-2xl font-bold text-white tracking-tight">Daily Verses</h2>
+              <p className="text-sm text-gray-500 font-medium">Revisiona i contenuti generati da Gemini.</p>
             </div>
-            <div className="flex flex-col gap-6">
-              { verses
-                .map(v => (
-                  <VerseCard key={v.id} verse={v} user={user} onApprove={handleApprove} onRefuse={handleRefuse} loadingId={loadingId} />
-                ))
-              }
+            <div className="text-right">
+              <span className="text-3xl font-black text-white/10 block leading-none">{pendingCount}</span>
+              <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">In coda</span>
             </div>
           </div>
-        )}
-        {tab === 'log' && canManageUsers && <LogTable logs={logs} />}
-        {tab === 'utenti' && canManageUsers && <UsersTab currentUser={user} />}
+          <div className="flex flex-col gap-6">
+            {verses.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-gray-500 text-sm">Nessun versetto in attesa.</p>
+                {user.ruolo === 'SuperAdmin' && (
+                  <button onClick={handleGenera} disabled={generando}
+                    className="mt-4 px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all">
+                    ✨ Genera nuovi versetti
+                  </button>
+                )}
+              </div>
+            ) : (
+              verses.map(v => (
+                <VerseCard key={v.id} verse={v} user={user} onApprove={handleApprove} onRefuse={handleRefuse} loadingId={loadingId} />
+              ))
+            )}
+          </div>
+        </div>
       </main>
     </div>
   )

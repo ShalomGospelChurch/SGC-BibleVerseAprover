@@ -41,3 +41,25 @@ export async function getLogs() {
   if (error) return []
   return data
 }
+
+export async function getVersettiApprovati() {
+  const { data, error } = await supabase
+    .from('versetti')
+    .select('*')
+    .eq('stato', 'approved')
+    .neq('immagine_stato', 'done')
+    .order('updated_at', { ascending: false })
+
+  if (error) return []
+  return data
+}
+
+export async function getVersettiUsati() {
+  const { data, error } = await supabase
+    .from('versetti_usati')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) return []
+  return data
+}
