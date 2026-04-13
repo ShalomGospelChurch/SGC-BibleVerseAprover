@@ -16,12 +16,14 @@ export async function POST() {
     const blacklist = usati?.map(v => v.riferimento_ita).join(', ') || ''
 
     // 2. Chiama Gemini
-    const prompt = `Sei un esperto biblico. Questi sono i versetti già usati: ${blacklist}. 
-Proponimi 21 nuovi versetti di promesse, benedizioni e incoraggiamento NON presenti in questa lista. 
-IMPORTANTE: per versetti lunghi puoi usare solo una parte significativa (es. Isaia 41:10a oppure Giovanni 3:16b) fino alla virgola o al punto più significativo — indica sempre la parte con la lettera a o b dopo il numero. 
-Versione italiana Nuova Riveduta. Versione Sinhala Old Version. 
-Rispondi SOLO con JSON valido senza testo extra nel formato: 
-[{"riferimento_ita":"...","testo_ita":"...","riferimento_sin":"...","testo_sin":"...","tema":"..."}]`
+    const prompt = `
+      Sei un esperto biblico. Questi sono i versetti già usati: ${blacklist}. 
+      Proponimi 21 nuovi versetti di promesse, benedizioni e incoraggiamento NON presenti in questa lista. 
+      IMPORTANTE: per versetti lunghi puoi usare solo una parte significativa (es. Isaia 41:10a oppure Giovanni 3:16b) fino alla virgola o al punto più significativo — indica sempre la parte con la lettera a o b dopo il numero. 
+      Versione italiana Nuova Riveduta. Versione Sinhala Union Old Version 2007 . 
+      Rispondi SOLO con JSON valido senza testo extra nel formato: 
+      [{"riferimento_ita":"...","testo_ita":"...","riferimento_sin":"...","testo_sin":"...","tema":"..."}]
+    `
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
