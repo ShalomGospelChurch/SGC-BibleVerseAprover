@@ -23,8 +23,28 @@ export default function Header({ user, subtitle = 'Control Center' }: HeaderProp
     const handleCopy = async () => {
         const res = await fetch('/api/versetti/pending-sinhala')
         const data = await res.json()
-        navigator.clipboard.writeText(data.text)
-        toast.success('Copiato Lista Sinhala!')
+        const text = data.text
+
+        try {
+            await navigator.clipboard.writeText(text)
+            toast.success('Copiato Lista Sinhala!')
+        } catch {
+            // Fallback per iOS
+            const textarea = document.createElement('textarea')
+            textarea.value = text
+            textarea.style.position = 'fixed'
+            textarea.style.opacity = '0'
+            document.body.appendChild(textarea)
+            textarea.focus()
+            textarea.select()
+            try {
+            document.execCommand('copy')
+            toast.success('Copiato Lista Sinhala!')
+            } catch {
+            toast.error('Copia non supportata su questo dispositivo')
+            }
+            document.body.removeChild(textarea)
+        }
     }
 
     const handleGenera = async () => {
