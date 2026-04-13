@@ -9,42 +9,22 @@ import router from 'next/router'
 interface HeaderProps {
   user: Utente
   subtitle?: string
+  copyText?: string
 }
 
 
     
-export default function Header({ user, subtitle = 'Control Center' }: HeaderProps) {
+export default function Header({ user, subtitle = 'Control Center', copyText }: HeaderProps) {
   const [generando, setGenerando] = useState(false)
     const handleLogout = async () => {
         await fetch('/api/auth/logout', { method: 'POST' })
         router.push('/login')
     }
 
-    const handleCopy = async () => {
-        const res = await fetch('/api/versetti/pending-sinhala')
-        const data = await res.json()
-        const text = data.text
-
-        try {
-            await navigator.clipboard.writeText(text)
-            toast.success('Copiato Lista Sinhala!')
-        } catch {
-            // Fallback per iOS
-            const textarea = document.createElement('textarea')
-            textarea.value = text
-            textarea.style.position = 'fixed'
-            textarea.style.opacity = '0'
-            document.body.appendChild(textarea)
-            textarea.focus()
-            textarea.select()
-            try {
-            document.execCommand('copy')
-            toast.success('Copiato Lista Sinhala!')
-            } catch {
-            toast.error('Copia non supportata su questo dispositivo')
-            }
-            document.body.removeChild(textarea)
-        }
+    const handleCopy = () => {
+        if (!copyText) return
+        navigator.clipboard.writeText(copyText)
+        toast.success('Copiato!')
     }
 
     const handleGenera = async () => {

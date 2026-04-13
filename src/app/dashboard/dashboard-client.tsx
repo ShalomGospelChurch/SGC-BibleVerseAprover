@@ -179,7 +179,11 @@ export default function DashboardClient({
       <Toaster position="top-right" toastOptions={{ style: { background: '#121212', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
 
       {/* Header */}
-      <Header user={user} subtitle="Control Center" />
+      <Header 
+        user={user} 
+        subtitle="Control Center"
+        copyText={verses.map(v => `*${v.riferimento_sin}*\n${v.testo_sin}`).join('\n\n')}
+      />
 
       {/* Navbar */}
       <Navbar user={user} />
