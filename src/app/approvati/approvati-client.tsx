@@ -185,8 +185,8 @@ function disegnaCard(
 
   // ─── LOGO ────────────────────────────────────────────────
   if (logoImg) {
-    const logoSize = 160
-    drawLogo(ctx, logoImg, W - logoSize - 20, 20, logoSize, logoMode)
+    const logoSize = 220
+    drawLogo(ctx, logoImg, W - logoSize - 30, 30, logoSize, logoMode)
   }
 
   // ─── TESTO VERSETTO ──────────────────────────────────────
