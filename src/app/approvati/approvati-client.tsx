@@ -23,16 +23,24 @@ const STILI = [
   { id: 'minimal', label: 'Minimal', prompt: 'minimal gradient background, clean, soft light' },
 ]
 
-const FOOTER_STYLES = [
-  { id: 'nero', label: 'Nero', bg: '#000000', text: '#ffffff' },
-  { id: 'bianco', label: 'Bianco', bg: '#ffffff', text: '#000000' },
-  { id: 'overlay', label: 'Overlay', bg: null, text: '#ffffff' },
+// Font selezionabili — espandibili da DB in futuro
+const FONTS = [
+  { id: 'georgia', label: 'Georgia', family: 'Georgia' },
+  { id: 'palatino', label: 'Palatino', family: 'Palatino Linotype' },
+  { id: 'times', label: 'Times', family: 'Times New Roman' },
+  { id: 'arial', label: 'Arial', family: 'Arial' },
+]
+
+const FOOTER_MODES = [
+  { id: 'nero', label: 'Nero' },
+  { id: 'bianco', label: 'Bianco' },
+  { id: 'overlay', label: 'Overlay' },
 ]
 
 const VERSIONI = [
   { id: 'ita', label: 'Italiano' },
   { id: 'sin', label: 'Sinhala' },
-  { id: 'img', label: 'Solo Immagine' },
+  { id: 'img', label: 'Solo Img' },
 ]
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number): number {
@@ -64,85 +72,139 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   })
 }
 
+// Colora un'immagine SVG in un colore specifico via canvas offscreen
+async function tintImage(img: HTMLImageElement, color: string): Promise<HTMLCanvasElement> {
+  const offscreen = document.createElement('canvas')
+  offscreen.width = img.width || 48
+  offscreen.height = img.height || 48
+  const ctx = offscreen.getContext('2d')!
+  ctx.drawImage(img, 0, 0, offscreen.width, offscreen.height)
+  ctx.globalCompositeOperation = 'source-in'
+  ctx.fillStyle = color
+  ctx.fillRect(0, 0, offscreen.width, offscreen.height)
+  return offscreen
+}
+
 function disegnaCard(
   ctx: CanvasRenderingContext2D,
   verse: Verse,
-  selectedPalette: typeof PALETTES[0],
-  footerStyle: typeof FOOTER_STYLES[0],
+  textColor: string,
+  footerMode: string,
   versione: string,
+  fontFamily: string,
   logoImg: HTMLImageElement | null,
   socialImgs: { yt: HTMLImageElement | null, fb: HTMLImageElement | null, ig: HTMLImageElement | null }
 ) {
   const W = 1080
   const H = 1080
   const FOOTER_H = 110
-
-  // Velo leggibilità
-  ctx.fillStyle = 'rgba(255,255,255,0.12)'
-  ctx.fillRect(0, 0, W, H)
-
   const footerY = H - FOOTER_H
 
-  // Footer background
-  if (footerStyle.bg) {
-    ctx.fillStyle = footerStyle.bg
+  // Velo leggibilità
+  ctx.fillStyle = 'rgba(255,255,255,0.10)'
+  ctx.fillRect(0, 0, W, H)
+
+  // ─── FOOTER ─────────────────────────────────────────────
+  let footerBg = '#000000'
+  let footerText = '#ffffff'
+  let footerIconColor = '#ffffff'
+
+  if (footerMode === 'bianco') {
+    footerBg = '#ffffff'
+    footerText = '#000000'
+    footerIconColor = '#000000'
+  } else if (footerMode === 'overlay') {
+    // nessun rettangolo, testo bianco sovrapposto
+    footerText = '#ffffff'
+    footerIconColor = '#ffffff'
+  }
+
+  if (footerMode !== 'overlay') {
+    ctx.fillStyle = footerBg
     ctx.fillRect(0, footerY, W, FOOTER_H)
   }
 
-  // Icone social
-  const iconSize = 48
+  // Icone social con tint corretto
+  const iconSize = 46
   const iconY = footerY + (FOOTER_H - iconSize) / 2
-  const startX = 60
-  if (socialImgs.yt) ctx.drawImage(socialImgs.yt, startX, iconY, iconSize, iconSize)
-  if (socialImgs.fb) ctx.drawImage(socialImgs.fb, startX + 70, iconY, iconSize, iconSize)
-  if (socialImgs.ig) ctx.drawImage(socialImgs.ig, startX + 140, iconY, iconSize, iconSize)
+  const startX = 55
 
-  // Nome chiesa
-  ctx.font = 'bold 36px Georgia'
-  ctx.fillStyle = footerStyle.text
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'middle'
-  ctx.fillText('Shalom Gospel Church', startX + 220, footerY + FOOTER_H / 2)
-
-  // Logo colomba in alto a destra
-  if (logoImg) {
-    ctx.drawImage(logoImg, W - 160, 20, 140, 140)
+  const drawTinted = (img: HTMLImageElement | null, x: number) => {
+    if (!img) return
+    const offscreen = document.createElement('canvas')
+    offscreen.width = iconSize
+    offscreen.height = iconSize
+    const octx = offscreen.getContext('2d')!
+    octx.drawImage(img, 0, 0, iconSize, iconSize)
+    octx.globalCompositeOperation = 'source-in'
+    octx.fillStyle = footerIconColor
+    octx.fillRect(0, 0, iconSize, iconSize)
+    ctx.drawImage(offscreen, x, iconY, iconSize, iconSize)
   }
 
-  // Testo versetto
+  drawTinted(socialImgs.yt, startX)
+  drawTinted(socialImgs.fb, startX + 65)
+  drawTinted(socialImgs.ig, startX + 130)
+
+  // Nome chiesa
+  ctx.font = `bold 34px ${fontFamily}`
+  ctx.fillStyle = footerText
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('Shalom Gospel Church', startX + 205, footerY + FOOTER_H / 2)
+
+  // ─── LOGO ────────────────────────────────────────────────
+  if (logoImg) {
+    const logoSize = 150
+    ctx.drawImage(logoImg, W - logoSize - 25, 20, logoSize, logoSize)
+  }
+
+  // ─── TESTO VERSETTO (stile YouVersion) ───────────────────
   if (versione === 'img') return
 
-  const textColor = selectedPalette.textColor
-  const contentArea = footerY - 40
+  const contentH = footerY
+  const centerY = contentH * 0.46
+
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
 
   if (versione === 'ita') {
-    ctx.font = 'italic bold 50px Georgia'
+    // Testo principale — grande, italic, centrato
+    ctx.font = `italic bold 54px ${fontFamily}`
     ctx.fillStyle = textColor
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    const lines = wrapText(ctx, `"${verse.testo_ita}"`, W / 2, contentArea * 0.42, 900, 66)
+    const nLines = wrapText(ctx, `"${verse.testo_ita}"`, W / 2, centerY, 880, 72)
 
-    ctx.font = 'bold 36px Georgia'
-    ctx.fillStyle = textColor + 'dd'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    const refY = contentArea * 0.42 + (lines * 66) / 2 + 70
-    ctx.fillText(`— ${verse.riferimento_ita}`, W / 2, refY)
+    // Linea decorativa
+    const lineY = centerY + (nLines * 72) / 2 + 45
+    ctx.strokeStyle = textColor + '55'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(W / 2 - 120, lineY)
+    ctx.lineTo(W / 2 + 120, lineY)
+    ctx.stroke()
+
+    // Riferimento — piccolo, elegante sotto la linea
+    ctx.font = `bold 34px ${fontFamily}`
+    ctx.fillStyle = textColor + 'cc'
+    ctx.fillText(verse.riferimento_ita, W / 2, lineY + 50)
   }
 
   if (versione === 'sin') {
-    ctx.font = 'bold 50px serif'
+    ctx.font = `bold 54px serif`
     ctx.fillStyle = textColor
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    const lines = wrapText(ctx, verse.testo_sin, W / 2, contentArea * 0.42, 900, 70)
+    const nLines = wrapText(ctx, verse.testo_sin, W / 2, centerY, 880, 74)
 
-    ctx.font = 'bold 34px serif'
-    ctx.fillStyle = textColor + 'dd'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    const refY = contentArea * 0.42 + (lines * 70) / 2 + 70
-    ctx.fillText(verse.riferimento_sin || verse.riferimento_ita, W / 2, refY)
+    const lineY = centerY + (nLines * 74) / 2 + 45
+    ctx.strokeStyle = textColor + '55'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(W / 2 - 120, lineY)
+    ctx.lineTo(W / 2 + 120, lineY)
+    ctx.stroke()
+
+    ctx.font = `bold 32px serif`
+    ctx.fillStyle = textColor + 'cc'
+    ctx.fillText(verse.riferimento_sin || verse.riferimento_ita, W / 2, lineY + 50)
   }
 }
 
@@ -155,7 +217,8 @@ function ImageModal({ verse, onClose, onDone, user }: {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [palette, setPalette] = useState(() => localStorage.getItem('sgc-palette') || 'gold')
   const [stile, setStile] = useState(() => localStorage.getItem('sgc-stile') || 'watercolor')
-  const [footerStile, setFooterStile] = useState(() => localStorage.getItem('sgc-footer') || 'nero')
+  const [footerMode, setFooterMode] = useState(() => localStorage.getItem('sgc-footer') || 'nero')
+  const [fontId, setFontId] = useState(() => localStorage.getItem('sgc-font') || 'georgia')
   const [versione, setVersione] = useState('ita')
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -165,25 +228,35 @@ function ImageModal({ verse, onClose, onDone, user }: {
   const socialRef = useRef<{ yt: HTMLImageElement | null, fb: HTMLImageElement | null, ig: HTMLImageElement | null }>({ yt: null, fb: null, ig: null })
 
   const selectedPalette = PALETTES.find(p => p.id === palette) || PALETTES[0]
-  const selectedFooter = FOOTER_STYLES.find(f => f.id === footerStile) || FOOTER_STYLES[0]
+  const selectedFont = FONTS.find(f => f.id === fontId) || FONTS[0]
 
   useEffect(() => {
     localStorage.setItem('sgc-palette', palette)
     localStorage.setItem('sgc-stile', stile)
-    localStorage.setItem('sgc-footer', footerStile)
-  }, [palette, stile, footerStile])
+    localStorage.setItem('sgc-footer', footerMode)
+    localStorage.setItem('sgc-font', fontId)
+  }, [palette, stile, footerMode, fontId])
 
-  // Ridisegna quando cambia versione/palette/footer (senza rigenerare sfondo)
-  useEffect(() => {
-    if (!generato || !bgImageRef.current) return
+  const ridisegna = () => {
+    if (!generato) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     ctx.clearRect(0, 0, 1080, 1080)
-    ctx.drawImage(bgImageRef.current, 0, 0, 1080, 1080)
-    disegnaCard(ctx, verse, selectedPalette, selectedFooter, versione, logoRef.current, socialRef.current)
-  }, [versione, palette, footerStile, generato, verse, selectedPalette, selectedFooter])
+    if (bgImageRef.current instanceof HTMLImageElement) {
+      ctx.drawImage(bgImageRef.current, 0, 0, 1080, 1080)
+    } else {
+      const gradient = ctx.createLinearGradient(0, 0, 1080, 1080)
+      gradient.addColorStop(0, '#f5e6c8')
+      gradient.addColorStop(1, '#e8d5a3')
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, 1080, 1080)
+    }
+    disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, versione, selectedFont.family, logoRef.current, socialRef.current)
+  }
+
+  useEffect(() => { ridisegna() }, [versione, palette, footerMode, fontId, generato])
 
   const genera = async () => {
     setLoading(true)
@@ -193,7 +266,6 @@ function ImageModal({ verse, onClose, onDone, user }: {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Carica logo e icone social in parallelo
     try {
       const [logo, yt, fb, ig] = await Promise.allSettled([
         loadImage('/watermark.png'),
@@ -207,7 +279,7 @@ function ImageModal({ verse, onClose, onDone, user }: {
         fb: fb.status === 'fulfilled' ? fb.value : null,
         ig: ig.status === 'fulfilled' ? ig.value : null,
       }
-    } catch { /* continua senza logo/icone */ }
+    } catch { /**/ }
 
     const selectedStile = STILI.find(s => s.id === stile) || STILI[0]
     const prompt = `${selectedPalette.bg}, ${selectedStile.prompt}, no text, no people, no cross, clean background for bible verse card`
@@ -221,7 +293,7 @@ function ImageModal({ verse, onClose, onDone, user }: {
       bgImageRef.current = img
       ctx.clearRect(0, 0, 1080, 1080)
       ctx.drawImage(img, 0, 0, 1080, 1080)
-      disegnaCard(ctx, verse, selectedPalette, selectedFooter, versione, logoRef.current, socialRef.current)
+      disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, versione, selectedFont.family, logoRef.current, socialRef.current)
       setLoading(false)
       setGenerato(true)
     }
@@ -231,26 +303,21 @@ function ImageModal({ verse, onClose, onDone, user }: {
       gradient.addColorStop(1, '#e8d5a3')
       ctx.fillStyle = gradient
       ctx.fillRect(0, 0, 1080, 1080)
-      const fakeImg = new Image()
-      fakeImg.width = 1080
-      fakeImg.height = 1080
-      bgImageRef.current = canvas as unknown as HTMLImageElement
-      disegnaCard(ctx, verse, selectedPalette, selectedFooter, versione, logoRef.current, socialRef.current)
+      bgImageRef.current = null
+      disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, versione, selectedFont.family, logoRef.current, socialRef.current)
       setLoading(false)
       setGenerato(true)
-      toast('Sfondo fallback (Pollinations funzionerà su Vercel)', { icon: '⚠️' })
+      toast('Sfondo fallback — Pollinations funzionerà su Vercel', { icon: '⚠️' })
     }
   }
 
   const scarica = (v?: string) => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas || !generato) return
     const ctx = canvas.getContext('2d')
-    if (!ctx || !bgImageRef.current) return
-
+    if (!ctx) return
     const ver = v || versione
     ctx.clearRect(0, 0, 1080, 1080)
-
     if (bgImageRef.current instanceof HTMLImageElement) {
       ctx.drawImage(bgImageRef.current, 0, 0, 1080, 1080)
     } else {
@@ -260,19 +327,19 @@ function ImageModal({ verse, onClose, onDone, user }: {
       ctx.fillStyle = gradient
       ctx.fillRect(0, 0, 1080, 1080)
     }
-
-    disegnaCard(ctx, verse, selectedPalette, selectedFooter, ver, logoRef.current, socialRef.current)
-
+    disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, ver, selectedFont.family, logoRef.current, socialRef.current)
     const link = document.createElement('a')
     const suffix = ver === 'ita' ? 'ITA' : ver === 'sin' ? 'SIN' : 'IMG'
     link.download = `${verse.riferimento_ita.replace(/[\s:]/g, '_')}_${suffix}.png`
     link.href = canvas.toDataURL('image/png')
     link.click()
+    // Ridisegna la versione corrente dopo il download
+    setTimeout(ridisegna, 100)
   }
 
   const scaricaTutte = async () => {
     for (const v of ['ita', 'sin', 'img']) {
-      await new Promise(r => setTimeout(r, 300))
+      await new Promise(r => setTimeout(r, 400))
       scarica(v)
     }
   }
@@ -289,7 +356,6 @@ function ImageModal({ verse, onClose, onDone, user }: {
       formData.append('riferimento_ita', verse.riferimento_ita)
       formData.append('utente', user.nome)
       formData.append('ruolo', user.ruolo)
-
       const res = await fetch('/api/versetti/upload-immagine', { method: 'POST', body: formData })
       if (!res.ok) throw new Error()
       toast.success('Immagine salvata!')
@@ -304,7 +370,6 @@ function ImageModal({ verse, onClose, onDone, user }: {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
       <div className="bg-[#0f0f11] border border-white/10 rounded-2xl w-full max-w-sm">
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
           <div>
             <h3 className="text-sm font-bold text-white">{verse.riferimento_ita}</h3>
@@ -315,7 +380,6 @@ function ImageModal({ verse, onClose, onDone, user }: {
           </button>
         </div>
 
-        {/* Canvas */}
         <div className="relative w-64 mx-auto mt-4 aspect-square rounded-xl overflow-hidden bg-white/5 border border-white/5">
           <canvas ref={canvasRef} width={1080} height={1080} className="w-full h-full object-contain" />
           {loading && (
@@ -328,18 +392,25 @@ function ImageModal({ verse, onClose, onDone, user }: {
           )}
         </div>
 
-        {/* Opzioni */}
-        <div className="px-5 py-4 space-y-3">
-
+        <div className="px-5 py-4 space-y-2.5">
           {/* Versione */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold w-14">Versione</span>
+            <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold w-14">Lingua</span>
             {VERSIONI.map(v => (
               <button key={v.id} onClick={() => setVersione(v.id)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${
-                  versione === v.id ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' : 'border-white/10 text-gray-500 hover:text-gray-300'
-                }`}>
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${versione === v.id ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' : 'border-white/10 text-gray-500 hover:text-gray-300'}`}>
                 {v.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Font */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold w-14">Font</span>
+            {FONTS.map(f => (
+              <button key={f.id} onClick={() => setFontId(f.id)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${fontId === f.id ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' : 'border-white/10 text-gray-500 hover:text-gray-300'}`}>
+                {f.label}
               </button>
             ))}
           </div>
@@ -349,9 +420,7 @@ function ImageModal({ verse, onClose, onDone, user }: {
             <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold w-14">Palette</span>
             {PALETTES.map(p => (
               <button key={p.id} onClick={() => setPalette(p.id)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${
-                  palette === p.id ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' : 'border-white/10 text-gray-500 hover:text-gray-300'
-                }`}>
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${palette === p.id ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' : 'border-white/10 text-gray-500 hover:text-gray-300'}`}>
                 {p.label}
               </button>
             ))}
@@ -362,9 +431,7 @@ function ImageModal({ verse, onClose, onDone, user }: {
             <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold w-14">Stile</span>
             {STILI.map(s => (
               <button key={s.id} onClick={() => setStile(s.id)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${
-                  stile === s.id ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' : 'border-white/10 text-gray-500 hover:text-gray-300'
-                }`}>
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${stile === s.id ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' : 'border-white/10 text-gray-500 hover:text-gray-300'}`}>
                 {s.label}
               </button>
             ))}
@@ -373,12 +440,10 @@ function ImageModal({ verse, onClose, onDone, user }: {
           {/* Footer */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold w-14">Footer</span>
-            {FOOTER_STYLES.map(f => (
-              <button key={f.id} onClick={() => setFooterStile(f.id)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${
-                  footerStile === f.id ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' : 'border-white/10 text-gray-500 hover:text-gray-300'
-                }`}>
-                {f.id === 'nero' ? 'Nero' : f.id === 'bianco' ? 'Bianco' : 'Overlay'}
+            {FOOTER_MODES.map(f => (
+              <button key={f.id} onClick={() => setFooterMode(f.id)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${footerMode === f.id ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' : 'border-white/10 text-gray-500 hover:text-gray-300'}`}>
+                {f.label}
               </button>
             ))}
           </div>
@@ -390,23 +455,19 @@ function ImageModal({ verse, onClose, onDone, user }: {
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
               {generato ? 'Rigenera' : 'Genera'}
             </button>
-
             {generato && (
               <>
                 <button onClick={() => scarica()}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-gray-300 hover:text-white transition-all border border-white/10 hover:border-white/20">
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-gray-300 hover:text-white transition-all border border-white/10">
                   <Download size={12} /> 1
                 </button>
                 <button onClick={scaricaTutte}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-gray-300 hover:text-white transition-all border border-white/10 hover:border-white/20">
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-gray-300 hover:text-white transition-all border border-white/10">
                   <Download size={12} /> 3x
                 </button>
                 <button onClick={salvaESegna} disabled={uploading}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-green-400 hover:text-green-300 transition-all border border-green-500/20 hover:bg-green-500/10 disabled:opacity-50 ml-auto">
-                  {uploading
-                    ? <span className="w-3 h-3 border-2 border-green-500/30 border-t-green-400 rounded-full animate-spin" />
-                    : <Upload size={12} />
-                  }
+                  {uploading ? <span className="w-3 h-3 border-2 border-green-500/30 border-t-green-400 rounded-full animate-spin" /> : <Upload size={12} />}
                   Salva
                 </button>
               </>
@@ -426,6 +487,8 @@ export default function ApprovatiClient({ user, initialApprovati }: {
   const [search, setSearch] = useState('')
   const [loadingId, setLoadingId] = useState<number | null>(null)
   const [modalVerse, setModalVerse] = useState<Verse | null>(null)
+
+  const canGenerateImage = ['SuperAdmin', 'Admin', 'Grafico'].includes(user.ruolo)
 
   const filtered = approvati.filter(v =>
     v.riferimento_ita.toLowerCase().includes(search.toLowerCase()) ||
@@ -521,10 +584,12 @@ export default function ApprovatiClient({ user, initialApprovati }: {
                         className="flex items-center gap-1.5 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors border border-indigo-500/20 px-2 py-1.5 rounded-lg hover:bg-indigo-500/10">
                         <Copy size={12} /> Prompt
                       </button>
-                      <button onClick={() => setModalVerse(v)}
-                        className="flex items-center gap-1.5 text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors border border-purple-500/20 px-2 py-1.5 rounded-lg hover:bg-purple-500/10">
-                        <ImagePlus size={12} />
-                      </button>
+                      {canGenerateImage && (
+                        <button onClick={() => setModalVerse(v)}
+                          className="flex items-center gap-1.5 text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors border border-purple-500/20 px-2 py-1.5 rounded-lg hover:bg-purple-500/10">
+                          <ImagePlus size={12} />
+                        </button>
+                      )}
                       <button onClick={() => handleDone(v)} disabled={loadingId === v.id}
                         className="flex items-center gap-1.5 text-xs font-bold text-green-400 hover:text-green-300 transition-colors border border-green-500/20 px-2 py-1.5 rounded-lg hover:bg-green-500/10 disabled:opacity-50">
                         {loadingId === v.id
