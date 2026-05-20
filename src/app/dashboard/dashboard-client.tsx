@@ -189,7 +189,7 @@ export default function DashboardClient({
       <Navbar user={user} />
 
 
-      {user.ruolo === 'SuperAdmin' && (
+      {['SuperAdmin', 'Admin'].includes(user.ruolo) && (
         <div className="max-w-3xl mx-auto px-6 py-4">
           {stats.pending < 10 && (
             <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10">
