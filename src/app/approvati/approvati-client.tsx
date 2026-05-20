@@ -156,13 +156,12 @@ function disegnaCard(
     iconColor = '#000000'
   }
 
-  // Rettangolo footer solo per nero e bianco
   if (footerMode === 'nero' || footerMode === 'bianco') {
     ctx.fillStyle = footerBg
     ctx.fillRect(0, footerY, W, FOOTER_H)
   }
 
-  // ─── CONTENUTO FOOTER CENTRATO ──────────────────────────
+  // Footer centrato
   const iconSize = 44
   const gap = 16
   const churchText = 'Shalom Gospel Church'
@@ -183,7 +182,7 @@ function disegnaCard(
   ctx.textBaseline = 'middle'
   ctx.fillText(churchText, startX + (iconSize * 3) + (gap * 2) + 24, centerFooterY)
 
-  // ─── LOGO ────────────────────────────────────────────────
+  // ─── LOGO 220px in alto a destra ─────────────────────────
   if (logoImg) {
     const logoSize = 220
     drawLogo(ctx, logoImg, W - logoSize - 30, 30, logoSize, logoMode)
@@ -193,7 +192,7 @@ function disegnaCard(
   if (versione === 'img') return
 
   const contentH = footerY
-  const centerY = contentH * 0.46
+  const centerY = contentH * 0.44
 
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -201,9 +200,9 @@ function disegnaCard(
   if (versione === 'ita') {
     ctx.font = `italic bold 54px ${fontFamily}`
     ctx.fillStyle = textColor
-    ctx.textAlign = 'center'
     const nLines = wrapText(ctx, `"${verse.testo_ita}"`, W / 2, centerY, 880, 72)
 
+    // Linea decorativa
     const lineY = centerY + (nLines * 72) / 2 + 50
     ctx.strokeStyle = textColor + '55'
     ctx.lineWidth = 2
@@ -212,9 +211,12 @@ function disegnaCard(
     ctx.lineTo(W / 2 + 130, lineY)
     ctx.stroke()
 
+    // Riferimento in basso a destra
     ctx.font = `bold 34px ${fontFamily}`
     ctx.fillStyle = textColor + 'cc'
-    ctx.fillText(verse.riferimento_ita, W / 2, lineY + 52)
+    ctx.textAlign = 'right'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(verse.riferimento_ita, W - 80, footerY - 55)
   }
 
   if (versione === 'sin') {
@@ -230,9 +232,12 @@ function disegnaCard(
     ctx.lineTo(W / 2 + 130, lineY)
     ctx.stroke()
 
+    // Riferimento in basso a destra
     ctx.font = `bold 32px serif`
     ctx.fillStyle = textColor + 'cc'
-    ctx.fillText(verse.riferimento_sin || verse.riferimento_ita, W / 2, lineY + 52)
+    ctx.textAlign = 'right'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(verse.riferimento_sin || verse.riferimento_ita, W - 80, footerY - 55)
   }
 }
 
@@ -267,7 +272,7 @@ function ImageModal({ verse, onClose, onDone, user }: {
     localStorage.setItem('sgc-font', fontId)
   }, [palette, stile, footerMode, logoMode, fontId])
 
-  const ridisegna = (ver?: string) => {
+  const ridisegna = () => {
     if (!generato) return
     const canvas = canvasRef.current
     if (!canvas) return
@@ -283,7 +288,7 @@ function ImageModal({ verse, onClose, onDone, user }: {
       ctx.fillStyle = gradient
       ctx.fillRect(0, 0, 1080, 1080)
     }
-    disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, logoMode, ver || versione, selectedFont.family, logoRef.current, socialRef.current)
+    disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, logoMode, versione, selectedFont.family, logoRef.current, socialRef.current)
   }
 
   useEffect(() => { ridisegna() }, [versione, palette, footerMode, logoMode, fontId, generato])
