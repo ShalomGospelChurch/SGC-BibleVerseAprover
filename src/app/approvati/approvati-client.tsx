@@ -23,7 +23,6 @@ const STILI = [
   { id: 'minimal', label: 'Minimal', prompt: 'minimal gradient background, clean, soft light' },
 ]
 
-// Font selezionabili — espandibili da DB in futuro
 const FONTS = [
   { id: 'georgia', label: 'Georgia', family: 'Georgia' },
   { id: 'palatino', label: 'Palatino', family: 'Palatino Linotype' },
@@ -35,6 +34,13 @@ const FOOTER_MODES = [
   { id: 'nero', label: 'Nero' },
   { id: 'bianco', label: 'Bianco' },
   { id: 'overlay', label: 'Overlay' },
+  { id: 'trasparente', label: 'Trasparente' },
+]
+
+const LOGO_MODES = [
+  { id: 'normale', label: 'Normale' },
+  { id: 'bianco', label: 'Bianco' },
+  { id: 'nero', label: 'Nero' },
 ]
 
 const VERSIONI = [
@@ -72,17 +78,45 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   })
 }
 
-// Colora un'immagine SVG in un colore specifico via canvas offscreen
-async function tintImage(img: HTMLImageElement, color: string): Promise<HTMLCanvasElement> {
-  const offscreen = document.createElement('canvas')
-  offscreen.width = img.width || 48
-  offscreen.height = img.height || 48
-  const ctx = offscreen.getContext('2d')!
-  ctx.drawImage(img, 0, 0, offscreen.width, offscreen.height)
-  ctx.globalCompositeOperation = 'source-in'
-  ctx.fillStyle = color
-  ctx.fillRect(0, 0, offscreen.width, offscreen.height)
-  return offscreen
+function drawTintedIcon(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement | null,
+  x: number, y: number,
+  size: number,
+  color: string
+) {
+  if (!img) return
+  const off = document.createElement('canvas')
+  off.width = size
+  off.height = size
+  const octx = off.getContext('2d')!
+  octx.drawImage(img, 0, 0, size, size)
+  octx.globalCompositeOperation = 'source-in'
+  octx.fillStyle = color
+  octx.fillRect(0, 0, size, size)
+  ctx.drawImage(off, x, y, size, size)
+}
+
+function drawLogo(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  x: number, y: number,
+  size: number,
+  mode: string
+) {
+  if (mode === 'normale') {
+    ctx.drawImage(img, x, y, size, size)
+    return
+  }
+  const off = document.createElement('canvas')
+  off.width = size
+  off.height = size
+  const octx = off.getContext('2d')!
+  octx.drawImage(img, 0, 0, size, size)
+  octx.globalCompositeOperation = 'source-in'
+  octx.fillStyle = mode === 'bianco' ? '#ffffff' : '#000000'
+  octx.fillRect(0, 0, size, size)
+  ctx.drawImage(off, x, y, size, size)
 }
 
 function disegnaCard(
@@ -90,6 +124,7 @@ function disegnaCard(
   verse: Verse,
   textColor: string,
   footerMode: string,
+  logoMode: string,
   versione: string,
   fontFamily: string,
   logoImg: HTMLImageElement | null,
@@ -107,59 +142,54 @@ function disegnaCard(
   // ─── FOOTER ─────────────────────────────────────────────
   let footerBg = '#000000'
   let footerText = '#ffffff'
-  let footerIconColor = '#ffffff'
+  let iconColor = '#ffffff'
 
   if (footerMode === 'bianco') {
     footerBg = '#ffffff'
     footerText = '#000000'
-    footerIconColor = '#000000'
+    iconColor = '#000000'
   } else if (footerMode === 'overlay') {
-    // nessun rettangolo, testo bianco sovrapposto
     footerText = '#ffffff'
-    footerIconColor = '#ffffff'
+    iconColor = '#ffffff'
+  } else if (footerMode === 'trasparente') {
+    footerText = '#000000'
+    iconColor = '#000000'
   }
 
-  if (footerMode !== 'overlay') {
+  // Rettangolo footer solo per nero e bianco
+  if (footerMode === 'nero' || footerMode === 'bianco') {
     ctx.fillStyle = footerBg
     ctx.fillRect(0, footerY, W, FOOTER_H)
   }
 
-  // Icone social con tint corretto
-  const iconSize = 46
-  const iconY = footerY + (FOOTER_H - iconSize) / 2
-  const startX = 55
+  // ─── CONTENUTO FOOTER CENTRATO ──────────────────────────
+  const iconSize = 44
+  const gap = 16
+  const churchText = 'Shalom Gospel Church'
+  ctx.font = `bold 32px ${fontFamily}`
+  const textWidth = ctx.measureText(churchText).width
+  const totalWidth = (iconSize * 3) + (gap * 2) + 24 + textWidth
+  const startX = (W - totalWidth) / 2
+  const centerFooterY = footerY + FOOTER_H / 2
+  const iconY = centerFooterY - iconSize / 2
 
-  const drawTinted = (img: HTMLImageElement | null, x: number) => {
-    if (!img) return
-    const offscreen = document.createElement('canvas')
-    offscreen.width = iconSize
-    offscreen.height = iconSize
-    const octx = offscreen.getContext('2d')!
-    octx.drawImage(img, 0, 0, iconSize, iconSize)
-    octx.globalCompositeOperation = 'source-in'
-    octx.fillStyle = footerIconColor
-    octx.fillRect(0, 0, iconSize, iconSize)
-    ctx.drawImage(offscreen, x, iconY, iconSize, iconSize)
-  }
+  drawTintedIcon(ctx, socialImgs.yt, startX, iconY, iconSize, iconColor)
+  drawTintedIcon(ctx, socialImgs.fb, startX + iconSize + gap, iconY, iconSize, iconColor)
+  drawTintedIcon(ctx, socialImgs.ig, startX + (iconSize + gap) * 2, iconY, iconSize, iconColor)
 
-  drawTinted(socialImgs.yt, startX)
-  drawTinted(socialImgs.fb, startX + 65)
-  drawTinted(socialImgs.ig, startX + 130)
-
-  // Nome chiesa
-  ctx.font = `bold 34px ${fontFamily}`
+  ctx.font = `bold 32px ${fontFamily}`
   ctx.fillStyle = footerText
   ctx.textAlign = 'left'
   ctx.textBaseline = 'middle'
-  ctx.fillText('Shalom Gospel Church', startX + 205, footerY + FOOTER_H / 2)
+  ctx.fillText(churchText, startX + (iconSize * 3) + (gap * 2) + 24, centerFooterY)
 
   // ─── LOGO ────────────────────────────────────────────────
   if (logoImg) {
-    const logoSize = 150
-    ctx.drawImage(logoImg, W - logoSize - 25, 20, logoSize, logoSize)
+    const logoSize = 160
+    drawLogo(ctx, logoImg, W - logoSize - 20, 20, logoSize, logoMode)
   }
 
-  // ─── TESTO VERSETTO (stile YouVersion) ───────────────────
+  // ─── TESTO VERSETTO ──────────────────────────────────────
   if (versione === 'img') return
 
   const contentH = footerY
@@ -169,24 +199,21 @@ function disegnaCard(
   ctx.textBaseline = 'middle'
 
   if (versione === 'ita') {
-    // Testo principale — grande, italic, centrato
     ctx.font = `italic bold 54px ${fontFamily}`
     ctx.fillStyle = textColor
     const nLines = wrapText(ctx, `"${verse.testo_ita}"`, W / 2, centerY, 880, 72)
 
-    // Linea decorativa
-    const lineY = centerY + (nLines * 72) / 2 + 45
+    const lineY = centerY + (nLines * 72) / 2 + 50
     ctx.strokeStyle = textColor + '55'
     ctx.lineWidth = 2
     ctx.beginPath()
-    ctx.moveTo(W / 2 - 120, lineY)
-    ctx.lineTo(W / 2 + 120, lineY)
+    ctx.moveTo(W / 2 - 130, lineY)
+    ctx.lineTo(W / 2 + 130, lineY)
     ctx.stroke()
 
-    // Riferimento — piccolo, elegante sotto la linea
     ctx.font = `bold 34px ${fontFamily}`
     ctx.fillStyle = textColor + 'cc'
-    ctx.fillText(verse.riferimento_ita, W / 2, lineY + 50)
+    ctx.fillText(verse.riferimento_ita, W / 2, lineY + 52)
   }
 
   if (versione === 'sin') {
@@ -194,17 +221,17 @@ function disegnaCard(
     ctx.fillStyle = textColor
     const nLines = wrapText(ctx, verse.testo_sin, W / 2, centerY, 880, 74)
 
-    const lineY = centerY + (nLines * 74) / 2 + 45
+    const lineY = centerY + (nLines * 74) / 2 + 50
     ctx.strokeStyle = textColor + '55'
     ctx.lineWidth = 2
     ctx.beginPath()
-    ctx.moveTo(W / 2 - 120, lineY)
-    ctx.lineTo(W / 2 + 120, lineY)
+    ctx.moveTo(W / 2 - 130, lineY)
+    ctx.lineTo(W / 2 + 130, lineY)
     ctx.stroke()
 
     ctx.font = `bold 32px serif`
     ctx.fillStyle = textColor + 'cc'
-    ctx.fillText(verse.riferimento_sin || verse.riferimento_ita, W / 2, lineY + 50)
+    ctx.fillText(verse.riferimento_sin || verse.riferimento_ita, W / 2, lineY + 52)
   }
 }
 
@@ -218,6 +245,7 @@ function ImageModal({ verse, onClose, onDone, user }: {
   const [palette, setPalette] = useState(() => localStorage.getItem('sgc-palette') || 'gold')
   const [stile, setStile] = useState(() => localStorage.getItem('sgc-stile') || 'watercolor')
   const [footerMode, setFooterMode] = useState(() => localStorage.getItem('sgc-footer') || 'nero')
+  const [logoMode, setLogoMode] = useState(() => localStorage.getItem('sgc-logo') || 'normale')
   const [fontId, setFontId] = useState(() => localStorage.getItem('sgc-font') || 'georgia')
   const [versione, setVersione] = useState('ita')
   const [loading, setLoading] = useState(false)
@@ -234,10 +262,11 @@ function ImageModal({ verse, onClose, onDone, user }: {
     localStorage.setItem('sgc-palette', palette)
     localStorage.setItem('sgc-stile', stile)
     localStorage.setItem('sgc-footer', footerMode)
+    localStorage.setItem('sgc-logo', logoMode)
     localStorage.setItem('sgc-font', fontId)
-  }, [palette, stile, footerMode, fontId])
+  }, [palette, stile, footerMode, logoMode, fontId])
 
-  const ridisegna = () => {
+  const ridisegna = (ver?: string) => {
     if (!generato) return
     const canvas = canvasRef.current
     if (!canvas) return
@@ -253,10 +282,10 @@ function ImageModal({ verse, onClose, onDone, user }: {
       ctx.fillStyle = gradient
       ctx.fillRect(0, 0, 1080, 1080)
     }
-    disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, versione, selectedFont.family, logoRef.current, socialRef.current)
+    disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, logoMode, ver || versione, selectedFont.family, logoRef.current, socialRef.current)
   }
 
-  useEffect(() => { ridisegna() }, [versione, palette, footerMode, fontId, generato])
+  useEffect(() => { ridisegna() }, [versione, palette, footerMode, logoMode, fontId, generato])
 
   const genera = async () => {
     setLoading(true)
@@ -293,7 +322,7 @@ function ImageModal({ verse, onClose, onDone, user }: {
       bgImageRef.current = img
       ctx.clearRect(0, 0, 1080, 1080)
       ctx.drawImage(img, 0, 0, 1080, 1080)
-      disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, versione, selectedFont.family, logoRef.current, socialRef.current)
+      disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, logoMode, versione, selectedFont.family, logoRef.current, socialRef.current)
       setLoading(false)
       setGenerato(true)
     }
@@ -304,7 +333,7 @@ function ImageModal({ verse, onClose, onDone, user }: {
       ctx.fillStyle = gradient
       ctx.fillRect(0, 0, 1080, 1080)
       bgImageRef.current = null
-      disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, versione, selectedFont.family, logoRef.current, socialRef.current)
+      disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, logoMode, versione, selectedFont.family, logoRef.current, socialRef.current)
       setLoading(false)
       setGenerato(true)
       toast('Sfondo fallback — Pollinations funzionerà su Vercel', { icon: '⚠️' })
@@ -327,14 +356,13 @@ function ImageModal({ verse, onClose, onDone, user }: {
       ctx.fillStyle = gradient
       ctx.fillRect(0, 0, 1080, 1080)
     }
-    disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, ver, selectedFont.family, logoRef.current, socialRef.current)
+    disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, logoMode, ver, selectedFont.family, logoRef.current, socialRef.current)
     const link = document.createElement('a')
     const suffix = ver === 'ita' ? 'ITA' : ver === 'sin' ? 'SIN' : 'IMG'
     link.download = `${verse.riferimento_ita.replace(/[\s:]/g, '_')}_${suffix}.png`
     link.href = canvas.toDataURL('image/png')
     link.click()
-    // Ridisegna la versione corrente dopo il download
-    setTimeout(ridisegna, 100)
+    setTimeout(() => ridisegna(), 100)
   }
 
   const scaricaTutte = async () => {
@@ -393,7 +421,6 @@ function ImageModal({ verse, onClose, onDone, user }: {
         </div>
 
         <div className="px-5 py-4 space-y-2.5">
-          {/* Versione */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold w-14">Lingua</span>
             {VERSIONI.map(v => (
@@ -404,7 +431,6 @@ function ImageModal({ verse, onClose, onDone, user }: {
             ))}
           </div>
 
-          {/* Font */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold w-14">Font</span>
             {FONTS.map(f => (
@@ -415,7 +441,6 @@ function ImageModal({ verse, onClose, onDone, user }: {
             ))}
           </div>
 
-          {/* Palette */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold w-14">Palette</span>
             {PALETTES.map(p => (
@@ -426,7 +451,6 @@ function ImageModal({ verse, onClose, onDone, user }: {
             ))}
           </div>
 
-          {/* Stile */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold w-14">Stile</span>
             {STILI.map(s => (
@@ -437,7 +461,6 @@ function ImageModal({ verse, onClose, onDone, user }: {
             ))}
           </div>
 
-          {/* Footer */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold w-14">Footer</span>
             {FOOTER_MODES.map(f => (
@@ -448,7 +471,16 @@ function ImageModal({ verse, onClose, onDone, user }: {
             ))}
           </div>
 
-          {/* Bottoni */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold w-14">Logo</span>
+            {LOGO_MODES.map(l => (
+              <button key={l.id} onClick={() => setLogoMode(l.id)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${logoMode === l.id ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' : 'border-white/10 text-gray-500 hover:text-gray-300'}`}>
+                {l.label}
+              </button>
+            ))}
+          </div>
+
           <div className="flex gap-2 pt-1 flex-wrap">
             <button onClick={genera} disabled={loading}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all disabled:opacity-50 border border-indigo-400/20">
