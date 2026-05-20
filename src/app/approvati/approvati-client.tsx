@@ -201,6 +201,7 @@ function disegnaCard(
   if (versione === 'ita') {
     ctx.font = `italic bold 54px ${fontFamily}`
     ctx.fillStyle = textColor
+    ctx.textAlign = 'center'
     const nLines = wrapText(ctx, `"${verse.testo_ita}"`, W / 2, centerY, 880, 72)
 
     const lineY = centerY + (nLines * 72) / 2 + 50
