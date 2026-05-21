@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 import type { Verse, Utente } from '@/lib/supabase'
 import { Copy, Check, ImagePlus, X, RefreshCw, Download, Upload } from 'lucide-react'
@@ -279,7 +279,7 @@ function ImageModal({ verse, onClose, onDone, user }: {
     localStorage.setItem('sgc-font', fontId)
   }, [palette, stile, footerMode, logoMode, fontId])
 
-  const ridisegna = () => {
+  const ridisegna = useCallback(() => {
     if (!generato) return
     const canvas = canvasRef.current
     if (!canvas) return
@@ -296,9 +296,9 @@ function ImageModal({ verse, onClose, onDone, user }: {
       ctx.fillRect(0, 0, 1080, 1080)
     }
     disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, logoMode, versione, selectedFont.family, logoRef.current, socialRef.current)
-  }
+  })
 
-  useEffect(() => { ridisegna() }, [versione, palette, footerMode, logoMode, fontId, generato])
+  useEffect(() => { ridisegna() }, [versione, palette, footerMode, logoMode, fontId, generato, ridisegna])
 
   const genera = async () => {
     setLoading(true)
