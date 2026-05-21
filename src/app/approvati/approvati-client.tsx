@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 import type { Verse, Utente } from '@/lib/supabase'
 import { Copy, Check, ImagePlus, X, RefreshCw, Download, Upload } from 'lucide-react'
@@ -135,11 +135,9 @@ function disegnaCard(
   const FOOTER_H = 110
   const footerY = H - FOOTER_H
 
-  // Velo leggibilità
   ctx.fillStyle = 'rgba(255,255,255,0.10)'
   ctx.fillRect(0, 0, W, H)
 
-  // ─── FOOTER ─────────────────────────────────────────────
   let footerBg = '#000000'
   let footerText = '#ffffff'
   let iconColor = '#ffffff'
@@ -161,7 +159,6 @@ function disegnaCard(
     ctx.fillRect(0, footerY, W, FOOTER_H)
   }
 
-  // Footer centrato
   const iconSize = 44
   const gap = 16
   const churchText = 'Shalom Gospel Church'
@@ -182,10 +179,8 @@ function disegnaCard(
   ctx.textBaseline = 'middle'
   ctx.fillText(churchText, startX + (iconSize * 3) + (gap * 2) + 24, centerFooterY)
 
-  // ─── LOGO 220px in alto a destra ─────────────────────────
   if (logoImg) {
     const logoSize = 220
-    // Drop shadow per visibilità su qualsiasi sfondo
     ctx.save()
     ctx.shadowColor = 'rgba(0,0,0,0.4)'
     ctx.shadowBlur = 20
@@ -195,7 +190,6 @@ function disegnaCard(
     ctx.restore()
   }
 
-  // ─── TESTO VERSETTO ──────────────────────────────────────
   if (versione === 'img') return
 
   const contentH = footerY
@@ -209,7 +203,6 @@ function disegnaCard(
     ctx.fillStyle = textColor
     const nLines = wrapText(ctx, `"${verse.testo_ita}"`, W / 2, centerY, 880, 72)
 
-    // Linea decorativa
     const lineY = centerY + (nLines * 72) / 2 + 50
     ctx.strokeStyle = textColor + '55'
     ctx.lineWidth = 2
@@ -218,7 +211,6 @@ function disegnaCard(
     ctx.lineTo(W / 2 + 130, lineY)
     ctx.stroke()
 
-    // Riferimento in basso a destra
     ctx.font = `bold 34px ${fontFamily}`
     ctx.fillStyle = textColor + 'cc'
     ctx.textAlign = 'right'
@@ -239,7 +231,6 @@ function disegnaCard(
     ctx.lineTo(W / 2 + 130, lineY)
     ctx.stroke()
 
-    // Riferimento in basso a destra
     ctx.font = `bold 32px serif`
     ctx.fillStyle = textColor + 'cc'
     ctx.textAlign = 'right'
@@ -279,7 +270,7 @@ function ImageModal({ verse, onClose, onDone, user }: {
     localStorage.setItem('sgc-font', fontId)
   }, [palette, stile, footerMode, logoMode, fontId])
 
-  const ridisegna = useCallback(() => {
+  const ridisegna = () => {
     if (!generato) return
     const canvas = canvasRef.current
     if (!canvas) return
@@ -296,9 +287,10 @@ function ImageModal({ verse, onClose, onDone, user }: {
       ctx.fillRect(0, 0, 1080, 1080)
     }
     disegnaCard(ctx, verse, selectedPalette.textColor, footerMode, logoMode, versione, selectedFont.family, logoRef.current, socialRef.current)
-  })
+  }
 
-  useEffect(() => { ridisegna() }, [versione, palette, footerMode, logoMode, fontId, generato, ridisegna])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { ridisegna() }, [versione, palette, footerMode, logoMode, fontId, generato])
 
   const genera = async () => {
     setLoading(true)
@@ -310,7 +302,7 @@ function ImageModal({ verse, onClose, onDone, user }: {
 
     try {
       const [logo, yt, fb, ig] = await Promise.allSettled([
-        loadImage('/watermark.png'),
+        loadImage('/watermark.svg'),
         loadImage('https://cdn.simpleicons.org/youtube/ffffff'),
         loadImage('https://cdn.simpleicons.org/facebook/ffffff'),
         loadImage('https://cdn.simpleicons.org/instagram/ffffff'),
