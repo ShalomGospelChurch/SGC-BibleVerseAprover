@@ -50,21 +50,39 @@ export async function POST() {
 
     // 3. Salva in Supabase come pending
     const oggi = new Date().toISOString().split('T')[0]
-    const rows = versetti.map((v: VersettoGemini, i: number) => ({
-      data: oggi,
-      numero: i + 1,
-      riferimento_ita: v.riferimento_ita,
-      testo_ita: v.testo_ita,
-      riferimento_sin: v.riferimento_sin,
-      testo_sin: v.testo_sin,
-      tema: v.tema,
-      stato: 'pending',
-    }))
+    // 3b. Sostituisci testo_sin con quello ufficiale dal XML
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000' || 'http://localhost:3001'
+    const rowsWithOfficialSin = await Promise.all(
+      versetti.map(async (v: VersettoGemini, i: number) => {
+        let testo_sin = v.testo_sin
+        try {
+          const sinRes = await fetch(
+            `${baseUrl}/api/bible/sinhala?ref=${encodeURIComponent(v.riferimento_ita)}`
+          )
+          if (sinRes.ok) {
+            const sinData = await sinRes.json()
+            if (sinData.testo_sin) testo_sin = sinData.testo_sin
+          }
+        } catch { /* usa testo Gemini come fallback */ }
 
-    const { error } = await supabase.from('versetti').insert(rows)
+        return {
+          data: oggi,
+          numero: i + 1,
+          riferimento_ita: v.riferimento_ita,
+          testo_ita: v.testo_ita,
+          riferimento_sin: v.riferimento_sin,
+          testo_sin,
+          tema: v.tema,
+          stato: 'pending',
+        }
+      })
+    )
+    
+    const { error } = await supabase.from('versetti').insert(rowsWithOfficialSin)
+
     if (error) throw error
 
-    return NextResponse.json({ success: true, count: rows.length })
+    return NextResponse.json({ success: true, count: rowsWithOfficialSin.length })
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Errore generazione' }, { status: 500 })
