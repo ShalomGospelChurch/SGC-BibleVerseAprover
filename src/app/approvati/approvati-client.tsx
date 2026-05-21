@@ -181,13 +181,7 @@ function disegnaCard(
 
   if (logoImg) {
     const logoSize = 220
-    ctx.save()
-    ctx.shadowColor = 'rgba(0,0,0,0.4)'
-    ctx.shadowBlur = 20
-    ctx.shadowOffsetX = 2
-    ctx.shadowOffsetY = 2
     drawLogo(ctx, logoImg, W - logoSize - 30, 30, logoSize, logoMode)
-    ctx.restore()
   }
 
   if (versione === 'img') return
