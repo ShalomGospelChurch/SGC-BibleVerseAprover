@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const xmlPath = join(process.cwd(), 'public', 'SinhalaSROVBible.xml')
+    const xmlPath = join(process.cwd(), 'public', 'SinhalaOVBible.xml')
     const xml = readFileSync(xmlPath).toString('utf-8')
 
     // Regex per trovare il versetto corretto
