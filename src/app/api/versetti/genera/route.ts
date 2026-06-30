@@ -33,9 +33,12 @@ let xmlCache: string | null = null
 function getSinhalaVerse(riferimento: string): string | null {
   try {
     if (!xmlCache) {
-      xmlCache = readFileSync(join(process.cwd(), 'public', 'SinhalaSROVBible.xml')).toString('utf-8')
+      xmlCache = readFileSync(join(process.cwd(), 'public', 'SinhalaOVBible.xml')).toString('utf-8')
     }
-    const clean = riferimento.trim().replace(/[ab]$/, '')
+    const ref = riferimento.trim()
+    const partMatch = ref.match(/([abc])$/i)
+    const part = partMatch ? partMatch[1].toLowerCase() : null
+    const clean = ref.replace(/[abc]$/i, '')
     const match = clean.match(/^(.+?)\s+(\d+):(\d+)/)
     if (!match) return null
     const bookNum = BOOK_MAP[match[1].trim()]
@@ -49,7 +52,32 @@ function getSinhalaVerse(riferimento: string): string | null {
     if (!chapterMatch) return null
     const verseMatch = chapterMatch[0].match(new RegExp(`<verse number="${verse}">([\\s\\S]*?)</verse>`))
     if (!verseMatch) return null
-    return verseMatch[1].trim()
+
+    const fullText = verseMatch[1].trim()
+    if (!part) return fullText
+
+    // Prova prima a dividere sul punto e virgola (separatore naturale nelle Scritture)
+    let segments = fullText.split(/(?<=;)\s+/).map(s => s.trim()).filter(Boolean)
+
+    // Fallback: se non ci sono punto e virgola, usa la virgola ma solo se i segmenti
+    // risultanti sono abbastanza lunghi (>15 caratteri) per stare da soli
+    if (segments.length < 2) {
+      const byComma = fullText.split(/(?<=,)\s+/).map(s => s.trim()).filter(Boolean)
+      if (byComma.length >= 2 && byComma[0].length > 15) {
+        segments = byComma
+      }
+    }
+
+    // Se non è stato possibile dividere, restituisce il testo completo
+    if (segments.length < 2) return fullText
+
+    const result = part === 'a' ? segments[0]
+                 : part === 'b' ? segments[1]
+                 : part === 'c' ? (segments[2] || fullText)
+                 : fullText
+
+    // Se il risultato è troppo corto per stare da solo in un post, usa il testo completo
+    return result && result.length >= 41 ? result : fullText
   } catch { return null }
 }
 
@@ -67,7 +95,7 @@ export async function POST() {
       Sei un esperto biblico. Questi sono i versetti già usati: ${blacklist}. 
       Proponimi 21 nuovi versetti di promesse, benedizioni e incoraggiamento NON presenti in questa lista. 
       IMPORTANTE: per versetti lunghi puoi usare solo una parte significativa (es. Isaia 41:10a oppure Giovanni 3:16b) fino alla virgola o al punto più significativo — indica sempre la parte con la lettera a o b dopo il numero. 
-      Versione italiana Nuova Riveduta. Versione Sinhala Union Old Version 2007. 
+      Versione italiana Nuova Riveduta. Versione Sinhala Old Version 1938 (Ceylon Bible Society).
       Rispondi SOLO con JSON valido senza testo extra nel formato: 
       [{"riferimento_ita":"...","testo_ita":"...","riferimento_sin":"...","testo_sin":"...","tema":"..."}]
     `
