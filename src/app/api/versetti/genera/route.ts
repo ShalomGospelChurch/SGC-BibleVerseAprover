@@ -46,7 +46,7 @@ function getSinhalaVerse(riferimento: string): string | null {
     const chapter = parseInt(match[2])
     const verse = parseInt(match[3])
 
-    const bookMatch = xmlCache.match(new RegExp(`<book number="${bookNum}">[\\s\\S]*?</book>`))
+    const bookMatch = xmlCache.match(new RegExp(`<book number="${bookNum}"[^>]*>[\\s\\S]*?</book>`))
     if (!bookMatch) return null
     const chapterMatch = bookMatch[0].match(new RegExp(`<chapter number="${chapter}">[\\s\\S]*?</chapter>`))
     if (!chapterMatch) return null

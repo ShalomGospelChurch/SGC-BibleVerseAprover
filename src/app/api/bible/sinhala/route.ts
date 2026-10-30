@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
 
     // Regex per trovare il versetto corretto
     const bookRegex = new RegExp(
-      `<book number="${parsed.bookNum}">[\\s\\S]*?</book>`
+      `<book number="${parsed.bookNum}"[^>]*>[\\s\\S]*?</book>`
     )
     const bookMatch = xml.match(bookRegex)
     if (!bookMatch) {
