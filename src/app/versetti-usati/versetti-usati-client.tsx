@@ -4,10 +4,12 @@ import { useState } from 'react'
 import type { Utente } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
 import Header from '@/components/Header'
+import BibleProgress from '@/components/BibleProgress'
+import type { BibleStats } from '@/lib/bible-books'
 
 type VersettoUsato = { id: number; riferimento_ita: string; riferimento_sin: string | null; created_at: string }
 
-export default function VersettiUsatiClient({ user, initialVersetti }: { user: Utente; initialVersetti: VersettoUsato[] }) {
+export default function VersettiUsatiClient({ user, initialVersetti, stats }: { user: Utente; initialVersetti: VersettoUsato[]; stats: BibleStats }) {
   const [search, setSearch] = useState('')
 
   const filtered = initialVersetti.filter(v =>
@@ -26,6 +28,8 @@ export default function VersettiUsatiClient({ user, initialVersetti }: { user: U
             <h2 className="text-2xl font-bold text-white tracking-tight">Versetti Usati</h2>
             <p className="text-sm text-gray-500">{filtered.length} versetti nella blacklist Gemini</p>
           </div>
+
+          <BibleProgress stats={stats} />
 
           <input type="text" placeholder="Cerca versetto..."
             value={search} onChange={e => setSearch(e.target.value)}
